@@ -1,0 +1,151 @@
+.main {
+  min-height: 100%;
+}
+
+.all-content {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  height: 847px;
+  background-image: url(@/assets/images/bg.jpeg);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.header {
+  background: #02509b;
+  box-shadow: 2px 2px 10px 2px #000000;
+}
+
+.logo-div {
+  height: 64px;
+}
+
+.logo {
+  height: 50px;
+  margin-top: 7px;
+}
+
+.left-content .right-content {
+  text-align: left;
+  justify-content: center;
+}
+
+.left-box {
+  width: 600px;
+  height: 300px;
+  margin: 200px auto;
+  letter-spacing: 3px;
+  color: #02509b;
+}
+
+.h1 {
+  font-size: 60px;
+  padding: 35px;
+}
+
+.h2 {
+  font-size: 40px;
+  padding: 35px;
+}
+
+.h3 {
+  font-size: 15px;
+  padding: 35px;
+  font-weight: bold;
+}
+
+.right-box {
+  margin-top: 150px;
+  text-align: center;
+  width: 550px;
+  height: 560px;
+  background-color: rgba(255, 255, 255, 0.7);
+  box-shadow: 2px 2px 10px 2px #02509b;
+  border-radius: 20px;
+}
+
+.forget {
+  font-size: 30px;
+  transform: scale(0.6);
+  float: right;
+  margin-right: -50px;
+  margin-top: -40px;
+}
+
+.change {
+  width: 670px;
+  height: 90px;
+}
+
+.ant-switch {
+  margin-left: -130px;
+  margin-top: 45px;
+  transform: scale(2);
+}
+
+:deep(
+    :where(.css-dev-only-do-not-override-1d2ymd6).ant-switch
+      .ant-switch-inner
+      .ant-switch-inner-unchecked
+  ) {
+  color: #02509b;
+}
+
+.icon {
+  width: 50px;
+  height: 50px;
+  margin: 12px;
+  box-shadow: 1px 1px 10px #02509b;
+}
+
+.input {
+  height: 35px;
+  margin-top: 40px;
+  margin-left: -11px;
+}
+
+.input1 {
+  height: 35px;
+  margin-top: 0px;
+  margin-left: -11px;
+}
+
+.submit {
+  width: 350px;
+  height: 45px;
+  border-radius: 15px;
+  font-size: 22px;
+}
+
+.other {
+  background-color: white;
+  color: #02509b;
+  border: 1px solid #02509b;
+}
+
+:deep(:where(.css-dev-only-do-not-override-hd469n).ant-form-item .ant-form-item-explain-error) {
+  float: left;
+  font-size: 10px;
+  margin-top: 6px;
+}
+
+:deep(:where(.css-dev-only-do-not-override-hd469n).ant-input-group .ant-input-group-addon) {
+  padding: 0px 0px;
+  border: none;
+}
+
+:deep(:where(.css-dev-only-do-not-override-hd469n).ant-btn-default) {
+  border-radius: 5px 5px 5px 5px;
+}
+
+:deep(
+    :where(.css-dev-only-do-not-override-hd469n).ant-radio-button-wrapper:first-child:last-child
+  ) {
+  border-radius: 0px 5px 5px 0px;
+}
+
+:deep(:where(.css-dev-only-do-not-override-hd469n).ant-radio-button-wrapper:first-child) {
+  border-inline-start: none;
+}
