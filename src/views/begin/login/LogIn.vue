@@ -247,8 +247,8 @@ async function logIn() {
   const loginResult = await JWHLoginRequest(formState.useraccount, formState.password)
   // console.log(loginResult)
   if (loginResult.code == 200) {
-     console.log(loginResult.data)
-    localStorage.setItem('LOGIN_TOKEN', loginResult.data.access_Token)
+    console.log(loginResult.data.access_Token)
+    localStorage.setItem('access_Token', loginResult.data.access_Token)
     router.push('/HomePage')
     message.success(`${loginResult.msg}`)
   } else {
