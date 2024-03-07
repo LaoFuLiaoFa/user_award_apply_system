@@ -29,7 +29,7 @@
             <a-button
               type="primary"
               style="background-color: rgb(241, 170, 78)"
-              @click="showModal1(record)"
+              @click="changebutton(record.url)"
             >
               修改
             </a-button>
@@ -60,8 +60,9 @@
                       :change="customRequest"
                       v-model:file-list="fileList"
                     > -->
-                    <a-upload
+                    <a-upload-dragger
                     action="http://47.108.144.113:2000/api/stu/OssUpdate"
+                    :beforeUpload="beforeUpload"
                     :multiple="true"
                     :file-list="fileList"
                     @change="handleChange"
@@ -70,7 +71,7 @@
                       <InboxOutlined />
                     </p>
                     <p class="ant-upload-text">将文件拖到此处或点击上传</p>
-                  </a-upload>
+                  </a-upload-dragger>
                 </a-form-item>
               </a-form>
             </a-modal>
@@ -109,14 +110,13 @@
 <script setup lang="ts">
 import { computed, ref, reactive, toRaw, type UnwrapRef } from 'vue'
 import { message, Upload } from 'ant-design-vue'
-import type { UploadProps } from 'ant-design-vue/es/upload';
 import { InboxOutlined } from '@ant-design/icons-vue'
-import type { UploadChangeParam } from 'ant-design-vue'
+import type { UploadChangeParam,UploadProps } from 'ant-design-vue'
 import { JWHgetdoubleRequest,JWHeditRequest,JWHdeleteRequest,JWHupfileRequest,JWHgetreasonRequest } from '../../../service/mains/apply-manage/double-star'
 
 const reasondata = ref(''); // 使用 ref 定义 reasondata
 const url = ref('');
-const fileList = ref<UploadProps['fileList'] | null>(null)!
+
 // const awardurl = ref<string[]>([]);
   const awardurl = ref('');
 //定义表单
@@ -225,11 +225,25 @@ const doubletoken = "bearer"+' '+localStorage.getItem('LOGIN_TOKEN');
     },
   })
   if (doubleResult.code == 200) {
-    console.log(doubleResult.data)
+    //console.log(doubleResult.data)
     dataSource.value = doubleResult.data
   }
 }
+//将新文件更新在列表中
+const handleChange = (info: UploadChangeParam) => {
+  let resFileList = [...info.fileList];
 
+  resFileList = resFileList.slice(-1);
+
+  resFileList = resFileList.map(file => {
+    if (file.response) {
+      file.url = file.response.url;
+    }
+    return file;
+  });
+
+  fileList.value = resFileList;
+};
  //删除后端数据
 async function liedelete(key:string) {
   const deleteResult = await JWHdeleteRequest(key)
@@ -249,7 +263,7 @@ const onDelete = (key: string, record) => {
 }
 //佐证材料
 const open3 = ref<boolean>(false)
-/* //判断是否是pdf
+//判断是否是pdf
 const beforeUpload = (file: any) => {
   const isPDF = file.type === 'application/pdf'
   if (!isPDF) {
@@ -258,23 +272,23 @@ const beforeUpload = (file: any) => {
   }
   upfile(file);
   return false;
-} */
+}
 //上传修改文件获得链接
-/* async function upfile(file: any) {
+async function upfile(file: any) {
   // 取出登录token
 const filetoken = "bearer "+localStorage.getItem('LOGIN_TOKEN');
-    // console.log(file)
+    console.log(file)
   const fileResult = await JWHupfileRequest(file,filetoken)
-  // console.log(1)
+   console.log(1)
   if (fileResult.code == 200) {
     message.success(`${fileResult.msg}`)
     localStorage.setItem('fileResult', fileResult.data)
-    console.log()
+    console.log(2)
   } else {
     message.warning(`${fileResult.msg}`)
   }
 
-} */
+}
 //查看材料
 const material = (item) => {
   open3.value = true
@@ -292,15 +306,22 @@ const handleOk3 = (e: MouseEvent) => {
   //console.log(e)
   open3.value = false
 }
-
+let currenturl = null;
 const open = ref<boolean>(false)
-/* //点击修改
-const showModal1 = (item) => {
+const fileList = ref<UploadProps['fileList']>([]);
+//点击修改
+const changebutton = (url) => {
   open.value = true
-  console.log(item)
-  console.log(item.url )
-  fileList.value=item.url
-} */
+  console.log(currenturl)
+  fileList.value=[
+  {
+    uid: '-1',
+    name: `${url}`,
+    status: 'done',
+    url: url,
+  },
+];
+}
 
 /* const customRequest = async () => {
   try {
@@ -321,10 +342,9 @@ const showModal1 = (item) => {
 
 //上传修改表单
 const handleMoodelChange = async (record) => {
-  console.log(record.url)
   open.value = false
   const upfile = localStorage.getItem('fileResult');
-  const editResult = await JWHeditRequest(formState.companyname, formState.vp, formState.scale, formState.ranking, formState.signuptime, url, record.id)
+  const editResult = await JWHeditRequest(formState.companyname, formState.vp, formState.scale, formState.ranking, formState.signuptime, upfile, record.id)
   //console.log(editResult)
   if (editResult.code == 200) {
     message.success(`${editResult.msg}`)
