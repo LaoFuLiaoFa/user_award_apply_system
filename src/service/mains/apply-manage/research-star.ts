@@ -19,7 +19,6 @@ export function JWHgetresearchRequest(Authorization:any) {
 
 /**
  * @description 修改科研之星。
- * @param {string} scitype 注册公司名称
  * @param {string} sciname 虚拟/实体
  * @param {string} scigrade 公司规模
  * @param {string} ranking 申报人排名
@@ -28,10 +27,10 @@ export function JWHgetresearchRequest(Authorization:any) {
  * @param {string} id key
  * @method post
  */
-export function JWHeditRequest(scitype:string,sciname:string,scigrade:string,ranking:string,signuptime:string,url:any,id:string) {
+export function JWHeditreserchRequest(sciname:string,scigrade:string,ranking:string,signuptime:string,url:any,id:string) {
   return lsjRequest.post({
     url: '/api/stu/editsci',
-    data: { scitype,sciname,scigrade,ranking,signuptime,url, id }
+    data: { sciname,scigrade,ranking,signuptime,url, id }
   })
 }
 /**

@@ -23,59 +23,22 @@
         </template>
         <template v-else-if="column.dataIndex == 'operate'">
           <template v-if="record.state == 1">
-            <a-button type="link" style="color: green" @click="showModal4">查看证书</a-button>
+            <CheckCircleTwoTone :style="{fontSize: '25px'}" />
           </template>
           <template v-else-if="record.state == 0">
             <a-button
               type="primary"
               style="background-color: rgb(241, 170, 78)"
-              @click="showModal1(record)"
-
+              @click="changebutton(record)"
             >
               修改
             </a-button>
-            <a-modal v-model:open="open" title="修改填写内容" @ok="handleOk" okText="确认" cancelText="取消">
-              <!-- 修改表单 -->
-              <a-form :model="formState" style="max-width: 500px">
-                <a-form-item label="类别">
-                  <a-input v-model:value="formState.scitype" :placeholder="record.scitype"/>
-                </a-form-item>
-                <a-form-item label="项目名称/软著名称/期刊名称">
-                  <a-input v-model:value="formState.sciname" :placeholder="record.sciname"/>
-                </a-form-item>
-                <a-form-item label="项目级别/颁发单位/论文名称">
-                  <a-input v-model:value="formState.scigrade" :placeholder="record.scigrade"/>
-                </a-form-item>
-                <a-form-item label="排名/总人数">
-                  <a-input v-model:value="formState.ranking" :placeholder="record.ranking"/>
-                </a-form-item>
-                <a-form-item label="立项时间/获批时间/发表时间">
-                  <a-input v-model:value="formState.signuptime" :placeholder="record.signuptime"/>
-                </a-form-item>
-                <a-form-item label="佐证材料" name="dragger" >
-                    <a-upload-dragger
-                      v-model:fileList="formState.dragger"
-                      name="files"
-                      action="/upload.do"
-                      :beforeUpload="beforeUpload"
-                      @change="() => handleChange(record)"
-                      v-model:uploadedFiles="fileList"
-                    >
-                    <p class="ant-upload-drag-icon">
-                      <InboxOutlined />
-                    </p>
-                    <p class="ant-upload-text">将文件拖到此处或点击上传</p>
-                  </a-upload-dragger>
-                </a-form-item>
-                <a-form-item label="id">
-                  <a-input v-model:value="record.id" :placeholder="record.id"/>
-                </a-form-item>
-              </a-form>
-            </a-modal>
             <a-popconfirm
               v-if="dataSource.length"
               title="是否想要删除?"
-              @confirm="onDelete(record.key, record)"
+              okText="是"
+              cancelText="取消"
+              @confirm="onDelete(record.id)"
             >
               <a-button type="primary" style="margin-left: 45px" danger>删除</a-button>
             </a-popconfirm>
@@ -93,7 +56,9 @@
             <a-popconfirm
               v-if="dataSource.length"
               title="是否想要删除?"
-              @confirm="onDelete(record.key, record)"
+              okText="是"
+              cancelText="取消"
+              @confirm="onDelete(record.id)"
             >
               <a-button type="primary" style="margin-left: 45px" danger>删除</a-button>
             </a-popconfirm>
@@ -101,19 +66,47 @@
         </template>
       </template>
     </a-table>
+    <a-modal v-model:open="open" title="修改填写内容" @ok="handleMoodelChange" okText="确认" cancelText="取消">
+      <!-- 修改表单 -->
+      <a-form :model="formState" style="max-width: 500px">
+        <a-form-item label="项目名称/软著名称/期刊名称">
+          <a-input v-model:value="formState.sciname" :placeholder="itemCloum.sciname"/>
+        </a-form-item>
+        <a-form-item label="项目级别/颁发单位/论文名称">
+          <a-input v-model:value="formState.scigrade" :placeholder="itemCloum.scigrade"/>
+        </a-form-item>
+        <a-form-item label="排名/总人数">
+          <a-input v-model:value="formState.ranking" :placeholder="itemCloum.ranking"/>
+        </a-form-item>
+        <a-form-item label="立项时间/获批时间/发表时间">
+          <a-date-picker v-model:value="formState.signuptime" :placeholder="itemCloum.signuptime" style="width: 100%" />
+        </a-form-item>
+        <a-form-item label="佐证材料" name="dragger" >
+          <a-upload-dragger
+          action="http://47.108.144.113:2000/api/stu/OssUpdate"
+          :beforeUpload="beforeUpload"
+          :multiple="true"
+          :file-list="fileList"
+          @change="handleChange"
+        >
+          <p class="ant-upload-drag-icon">
+            <InboxOutlined />
+          </p>
+          <p class="ant-upload-text">将文件拖到此处或点击上传</p>
+        </a-upload-dragger>
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, reactive, toRaw, type UnwrapRef } from 'vue'
 import { message, Upload } from 'ant-design-vue'
-import { InboxOutlined } from '@ant-design/icons-vue'
+import { InboxOutlined,CheckCircleTwoTone, CloudDownloadOutlined } from '@ant-design/icons-vue'
 import type { UploadChangeParam,UploadProps } from 'ant-design-vue'
-import { JWHgetresearchRequest,JWHeditRequest,JWHdeleteRequest,JWHupfileRequest,JWHgetreasonRequest } from '../../../service/mains/apply-manage/research-star'
-const fileList = ref<UploadProps['fileList']>([ ])
-
+import { JWHgetresearchRequest,JWHeditreserchRequest,JWHdeleteRequest,JWHupfileRequest,JWHgetreasonRequest } from '../../../service/mains/apply-manage/research-star'
 const reasondata = ref(''); // 使用 ref 定义 reasondata
-const url = ref('');
 const awardurl = ref('');
 //定义表单
 interface FormState {
@@ -125,7 +118,6 @@ interface FormState {
   materials: string
   state: string
   address:string
-  operate: string
   dragger: any[]
 }
 const formState: UnwrapRef<FormState> = reactive({
@@ -137,9 +129,9 @@ const formState: UnwrapRef<FormState> = reactive({
   materials: '',
   state: '',
   address:'',
-  operate: '',
   dragger: []
 })
+//初始化内容
 //表格表头
 const columns = [
   {
@@ -200,15 +192,7 @@ const columns = [
   }
 ]
 // 表格内容
-const dataSource = ref<{
-  key: string;
-  scitype: string;
-  sciname: string;
-  scigrade: string;
-  ranking: string;
-  signuptime: string;
-  state: string;
-}[]>([]);
+const dataSource = ref([]);
 //获取科研表单页面
   grade();
 async function grade() {
@@ -223,14 +207,32 @@ const researchtoken = "bearer"+' '+localStorage.getItem('LOGIN_TOKEN');
   if (researchResult.code == 200) {
      //console.log(researchResult.data)
      dataSource.value = researchResult.data
+    //  console.log(cundata.value )
+
   }
 }
+//将新文件更新在列表中
+const handleChange = (info: UploadChangeParam) => {
+  let resFileList = [...info.fileList];
+
+  resFileList = resFileList.slice(-1);
+
+  resFileList = resFileList.map(file => {
+    if (file.response) {
+      file.url = file.response.url;
+    }
+    return file;
+  });
+
+  fileList.value = resFileList;
+};
 
  //删除后端数据
-async function liedelete(key:string) {
+async function liedelete(key: string) {
   const deleteResult = await JWHdeleteRequest(key)
    // console.log(key)
   if (deleteResult.code == 200) {
+    grade();
     message.success(`${deleteResult.msg}`)
   } else {
     message.warning(`${deleteResult.msg}`)
@@ -238,14 +240,13 @@ async function liedelete(key:string) {
 }
 const count = computed(() => dataSource.value.length + 1)
 //删除前端数据
-const onDelete = (key: string, record) => {
+const onDelete = (key: string) => {
   delete dataSource[key]
-  dataSource.value = dataSource.value.filter((item) => item.key !== key)
   liedelete(key)
 }
 //佐证材料
 const open3 = ref<boolean>(false)
-//上传pdf
+//判断是否是pdf
 const beforeUpload = (file: any) => {
   const isPDF = file.type === 'application/pdf'
   if (!isPDF) {
@@ -255,34 +256,21 @@ const beforeUpload = (file: any) => {
   upfile(file); // 直接将 file 对象传递给 upfile 函数
   return false; // 返回 false 取消默认的上传行为
 }
-//展示上传列表
-const handleChange = (item: any) => (info: UploadChangeParam) => {
-  let resFileList = [...info.fileList];
-  resFileList = resFileList.slice(-2);
-  resFileList = resFileList.map(file => {
-    if (file.response) {
-     console.log(item.url)
 
-      file.url = item.url;
-    }
-    return file;
-  });
-
-  fileList.value = resFileList;
-};
-// 取出登录token
-const filetoken = "bearer"+' '+localStorage.getItem('LOGIN_TOKEN');
-    // console.log(filetoken)
+//上传修改文件获得链接
 async function upfile(file: any) {
+  const filetoken = "bearer"+' '+localStorage.getItem('LOGIN_TOKEN');
   const fileResult = await JWHupfileRequest(file,filetoken)
   if (fileResult.code == 200) {
-    message.success(`${fileResult.msg}`)
+    message.success("上传成功")
     localStorage.setItem('fileResult', fileResult.data)
+    // console.log(fileResult)
   } else {
-    message.warning(`${fileResult.msg}`)
+    message.warning("上传失败")
   }
 
 }
+//查看材料
 const material = (item) => {
   open3.value = true
   //console.log(item.url)
@@ -291,44 +279,56 @@ const material = (item) => {
       '_blank'
     )
 }
-
-
 const handleOk3 = (e: MouseEvent) => {
   // console.log(e)
   open3.value = false
 }
-//点击修改item
+let currenturl = null;
 const open = ref<boolean>(false)
-
-const showModal1 = (item) => {
-  open.value = true;
-  console.log(item)
-  console.log(item)
-  fileList.value = [];
-  const newFile = {
-    uid: item.id,
-    name: item.url,
-    url: item.url
-  };
-
-  fileList.value.push(newFile);
+const fileList = ref<UploadProps['fileList']>([]);
+const itemCloum = ref()
+//点击修改
+const changebutton = (item) => {
+  // console.log(item);
+  itemCloum.value = item
+  // console.log(itemCloum.value.scigrade);
+  open.value = true
+  fileList.value=[
+  {
+    uid: '-1',
+    name: `${itemCloum.value.url}`,
+    status: 'done',
+    url: itemCloum.value.url,
+  },
+];
 }
 
-const handleOk = (e: MouseEvent,key:string, record) => {
-  // console.log(e)
+//上传修改表单
+const handleMoodelChange = async () => {
   open.value = false
   const upfile = localStorage.getItem('fileResult');
-  const edit = async () => {
-    const editResult = await JWHeditRequest(formState.scitype,formState.sciname,formState.scigrade,formState.ranking,formState.signuptime,upfile,key)
-  // console.log(editResult)
+  const newsciname= formState.sciname || itemCloum.value.sciname;
+  const newscigrade = formState.scigrade|| itemCloum.value.scigrade;
+  const newranking = formState.ranking || itemCloum.value.ranking;
+  const newsignuptime = formState.signuptime|| itemCloum.value.signuptime;
+  const editResult = await JWHeditreserchRequest(newsciname, newscigrade, newranking, newsignuptime, upfile, itemCloum.value.id)
   if (editResult.code == 200) {
     message.success(`${editResult.msg}`)
+    clear();
+    grade();
   } else {
+    clear();
     message.warning(`${editResult.msg}`)
   }
-  }
-  edit();
-  grade();
+}
+
+// 清空数据
+const clear= () => {
+  formState.scitype=''
+  formState.sciname=''
+  formState.scigrade=''
+  formState.ranking=''
+  formState.signuptime=''
 }
 // 查看驳回原因
 const open2 = ref<boolean>(false)
@@ -359,9 +359,6 @@ const handleOk4 = (e: MouseEvent) => {
   // console.log(e)
   open3.value = false
 }
-
-
-
 
 // 获取驳回原因
 const reasontoken = "bearer"+' '+localStorage.getItem('LOGIN_TOKEN');

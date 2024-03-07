@@ -40,7 +40,6 @@ declare module 'vue' {
     AUploadDragger: typeof import('ant-design-vue/es')['UploadDragger']
     HeaderMenu: typeof import('./src/components/mains-components/mainpage/HeaderMenu.vue')['default']
     MainMenu: typeof import('./src/components/mains-components/mainpage/MainMenu.vue')['default']
-    MatchFrom: typeof import('./src/components/mains-components/mainfrom/matchFrom.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SelectMenu: typeof import('./src/components/mains-components/mainpage/SelectMenu.vue')['default']

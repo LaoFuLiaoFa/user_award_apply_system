@@ -27,10 +27,10 @@ export function JWHgetdoubleRequest(Authorization:any) {
  * @param {string} id key
  * @method post
  */
-export function JWHeditRequest(companyname:string,vp:string,ranking:string,signuptime:string,scale:string,url:any,id:string) {
+export function JWHeditRequest(companyname:string,vp:string,scale:string,ranking:string,signuptime:any,url:any,id:string) {
   return lsjRequest.post({
     url: '/api/stu/editcompany',
-    data: { companyname,vp,ranking,signuptime,scale,url,id }
+    data: { companyname,vp,scale,ranking,signuptime,url,id }
   })
 }
 /**

@@ -247,8 +247,8 @@ async function logIn() {
   const loginResult = await JWHLoginRequest(formState.useraccount, formState.password)
   // console.log(loginResult)
   if (loginResult.code == 200) {
-    console.log(loginResult.data.access_Token)
-    localStorage.setItem('access_Token', loginResult.data.access_Token)
+     console.log(loginResult.data)
+    localStorage.setItem('LOGIN_TOKEN', loginResult.data.access_Token)
     router.push('/HomePage')
     message.success(`${loginResult.msg}`)
   } else {
@@ -304,18 +304,30 @@ async function signIn() {
   const signInResult = await JWHsigninRequest(selectedGrade.value,selectedMajor.value,selectedClass.value, formState.username,formState.useraccount,formState.password,formState.email,formState.code,emailToken)
   // console.log(emailToken)
   if (signInResult.code == 200) {
-    router.push('/Login')
     message.success(`${signInResult.msg}`)
+    clear();
+    state.checked=!state.checked
   } else {
     message.warning(`${signInResult.msg}`)
   }
   }
 }
+
 // 跳转忘记密码
 function forgotPassword() {
   router.push('/ForgotPassword')
 }
-
+// 清空数据
+const clear= () => {
+  selectedGrade.value='请选择年级'
+  selectedMajor.value='请选择班级'
+  selectedClass.value='请选择班级'
+  formState.username=''
+  formState.useraccount=''
+  formState.password=''
+  formState.email=''
+  formState.code=''
+}
 
 //监听状态,状态改变时清空表单数据
 watchEffect(() => {

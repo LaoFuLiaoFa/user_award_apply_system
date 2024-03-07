@@ -230,11 +230,14 @@ async function regest() {
   const forgetResult = await JWHforgetRequest( formState.useraccount,formState.email,formState.code,emailToken,formState.password)
   // console.log(emailToken)
   if (forgetResult.code == 200) {
-    router.push('/Login')
+    login()
     message.success(`${forgetResult .msg}`)
   } else {
     message.warning(`${forgetResult .msg}`)
   }
+}
+const login = () => {
+  router.push('/Login')
 }
 //返回登录
 async function reback() {

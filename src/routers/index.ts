@@ -39,27 +39,15 @@ const router = createRouter({
         },
         {
           path: '/ResearchProject',
-          name: 'ResearchProject',
-          component: () => import('@/views/mains/science-star/ResearchProject.vue'),
-          meta: {
-            title: '科研之星' // 设置默认标题
-          }
+          component: () => import('@/views/mains/science-star/ResearchProject.vue')
         },
         {
           path: '/SoftwareCopyright',
-          name: 'SoftwareCopyright',
-          component: () => import('@/views/mains/science-star/SoftwareCopyright.vue'),
-          meta: {
-            title: '软件著作权' // 设置默认标题
-          }
+          component: () => import('@/views/mains/science-star/SoftwareCopyright.vue')
         },
         {
           path: '/PublishPaper',
-          name: 'PublishPaper',
-          component: () => import('@/views/mains/science-star/PublishPaper.vue'),
-          meta: {
-            title: '发表论文' // 设置默认标题
-          }
+          component: () => import('@/views/mains/science-star/PublishPaper.vue')
         },
         {
           path: '/DoubleStar',
