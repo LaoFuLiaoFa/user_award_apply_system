@@ -4,13 +4,12 @@
  */
 import lsjRequest from '../..'
 
-
 /**
  * @description 进入科研页面就发起的请求
  * @param {any} Authorization token
  * @method get
  */
-export function JWHgetresearchRequest(Authorization:any) {
+export function JWHgetresearchRequest(Authorization: any) {
   return lsjRequest.get({
     url: '/api/stu/getsci',
     headers: { Authorization }
@@ -27,10 +26,17 @@ export function JWHgetresearchRequest(Authorization:any) {
  * @param {string} id key
  * @method post
  */
-export function JWHeditreserchRequest(sciname:string,scigrade:string,ranking:string,signuptime:string,url:any,id:string) {
+export function JWHeditreserchRequest(
+  sciname: string,
+  scigrade: string,
+  ranking: string,
+  signuptime: string,
+  url: any,
+  id: string
+) {
   return lsjRequest.post({
     url: '/api/stu/editsci',
-    data: { sciname,scigrade,ranking,signuptime,url, id }
+    data: { sciname, scigrade, ranking, signuptime, url, id }
   })
 }
 /**
@@ -38,7 +44,7 @@ export function JWHeditreserchRequest(sciname:string,scigrade:string,ranking:str
  * @param {string} form_id 编号
  * @method post
  */
-export function JWHdeleteRequest(form_id:string) {
+export function JWHdeleteRequest(form_id: string) {
   return lsjRequest.post({
     url: '/api/stu/deleteSic',
     data: { form_id }
@@ -49,27 +55,26 @@ export function JWHdeleteRequest(form_id:string) {
  * @param {file} file 文件
  * @method post
  */
-export function JWHupfileRequest(file:File,Authorization:any) {
-  // console.log(file)
-  // console.log(Authorization)
-  const formData = new FormData();
-  formData.append('file', file);
-  return lsjRequest.post({
-    url: '/api/stu/OssUpdate',
-    data:formData,
-    headers: { Authorization, 'Content-Type': 'multipart/form-data'  } //加请求头
-  })
-}
+// export function JWHupfileRequest(file: File, Authorization: any) {
+//   // console.log(file)
+//   // console.log(Authorization)
+//   const formData = new FormData()
+//   formData.append('file', file)
+//   return lsjRequest.post({
+//     url: '/api/stu/OssUpdate',
+//     data: formData,
+//     headers: { Authorization, 'Content-Type': 'multipart/form-data' } //加请求头
+//   })
+// }
 
 /**
  * @description 查询科研之星驳回理由
  * @method get
  */
-export function JWHgetreasonRequest(form_id:string,Authorization:any) {
+export function JWHgetreasonRequest(form_id: string, Authorization: any) {
   return lsjRequest.get({
     url: '/api/stu/getreasonSic',
-    params: { form_id},
+    params: { form_id },
     headers: { Authorization }
   })
 }
-

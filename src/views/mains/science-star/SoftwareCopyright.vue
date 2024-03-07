@@ -8,6 +8,7 @@
 <template>
   <div class="contest_main">
     <div class="describe">
+      <h1 style="display: none">{{ title }}</h1>
       <span class="describe_content">评选说明:</span><br />
       <span class="describe_content"
         >1.作为项目主要成员(排名前八)获得院级及以上科研项目或教研课题立项(含教师科研项目)1项及以上;
@@ -34,19 +35,23 @@
         <a-input v-model:value="formState.ranking" placeholder="请输入内容" />
       </a-form-item>
       <a-form-item label="获批时间" name="date1">
-        <a-date-picker
-          v-model:value="formState.date1"
-          type="date"
-          placeholder="请选择日期"
-          style="width: 100%"
-        />
+        <a-config-provider :locale="locale">
+          <a-date-picker
+            v-model:value="formState.date1"
+            type="date"
+            placeholder="请选择日期"
+            style="width: 100%"
+            :locale="locale"
+          />
+        </a-config-provider>
       </a-form-item>
       <a-form-item label="佐证材料">
         <a-form-item name="dragger" no-style>
           <a-upload-dragger
-            v-model:file-list="formState.dragger"
+            v-model="formState.dragger"
             name="file"
             :max-count="1"
+            :file-list="fileList"
             :headers="headers"
             :action="ossUploadUrl"
             :beforeUpload="beforeUpload"
@@ -67,15 +72,13 @@
 </template>
 
 <script setup lang="ts">
-import { Dayjs } from 'dayjs'
-import { reactive, ref, toRaw } from 'vue'
+import { reactive, ref } from 'vue'
 import type { UnwrapRef } from 'vue'
 import type { Rule } from 'ant-design-vue/es/form'
 import { InboxOutlined } from '@ant-design/icons-vue'
-import { message, Upload } from 'ant-design-vue'
+import { message } from 'ant-design-vue'
 import type { UploadChangeParam } from 'ant-design-vue'
 import cssAnimation from 'ant-design-vue/es/_util/css-animation'
-import style = cssAnimation.style
 import { BASE_URL } from '@/service/config'
 import { useRouter } from 'vue-router'
 import { zhqsoftwareRequest } from '@/service/mains/science-star/software-copyright'
@@ -83,30 +86,29 @@ import { format } from 'date-fns'
 import dayjs from 'dayjs'
 import 'dayjs/locale/zh-cn'
 import locale from 'ant-design-vue/es/date-picker/locale/zh_CN'
-dayjs.locale('zh-cn')
-interface FileItem {
-  response: {
-    data: string // 这里是 data 属性，应该是一个 URL 字符串
-  }
-}
+import type { UploadProps } from 'ant-design-vue'
 
+dayjs.locale('zh-cn')
 interface FormState {
   name: string
-  date1: Dayjs | undefined
-  dragger: any[]
+  date1: string
+  dragger: string
   unit: string
   ranking: string
 }
+const router = useRouter()
+const { title } = router.currentRoute.value.meta
 const formRef = ref()
 const labelCol = { span: 9 }
 const wrapperCol = { span: 8 }
 const formState: UnwrapRef<FormState> = reactive({
   name: '',
   date1: '',
-  dragger: [],
+  dragger: '',
   unit: '',
   ranking: ''
 })
+//表单验证
 const rules: Record<string, Rule[]> = {
   name: [{ required: true, message: '请填写软著名称', trigger: 'change' }],
   unit: [{ required: true, message: '请填写颁发单位', trigger: 'change' }],
@@ -123,6 +125,7 @@ const token = localStorage.getItem('access_Token')
 const headers = {
   Authorization: 'Bearer ' + token
 }
+const fileList = ref<UploadProps['fileList']>([])
 async function onSubmit() {
   // 检查表单是否填写完整
   if (!formState.name || !formState.date1 || formState.dragger.length === 0) {
@@ -135,51 +138,74 @@ async function onSubmit() {
   const signuptime = formatDate(dateObject.getTime(), 'yyyy-MM-dd')
   // 创建符合期望类型的对象
   const requestData = {
-    scitype: title as string,
+    scitype: '软件著作权',
     sciname: formState.name,
     scigrade: formState.unit,
     ranking: formState.ranking,
-    signuptime: formState.date1,
-    url: formState.dragger.map((item) => item.response.data).join(',')
+    signuptime: signuptime,
+    url: formState.dragger
   }
   try {
     // 调用 ContestRequest 函数
     const response = await zhqsoftwareRequest(requestData)
-    // 在接口请求成功后进行提示
-    message.success('提交成功')
-    formState.name = ''
-    ;(formState.unit = ''), (formState.ranking = ''), (formState.date1 = '')
+    if (response.code === 200) {
+      // 在接口请求成功后进行提示
+      message.success('提交成功')
+      formState.name = ''
+      formState.unit = ''
+      formState.ranking = ''
+      formState.date1 = ''
+      formState.dragger = ''
+      fileList.value = []
+    }
   } catch (error) {
     // 在接口请求失败时进行提示
     message.error('提交失败')
   }
 }
-//上传pdf
+// 上传PDF地址
+const ossUploadUrl = BASE_URL + 'api/stu/OssUpdate'
+// 判断只能上传PDF文件
 const beforeUpload = (file: any) => {
   const isPDF = file.type === 'application/pdf'
+  const maxFileSize = 10 * 1024 * 1024
+
   if (!isPDF) {
     message.error('只能上传 PDF 文件！')
+  } else if (file.size > maxFileSize) {
+    message.error('文件大小超过限制！')
+  } else {
+    // message.success('PDF 文件上传成功！');
   }
-  return isPDF || Upload.LIST_IGNORE
+
+  return isPDF && file.size <= maxFileSize
 }
-const fileList = ref([])
+//pdf文件上传状态
 const handleChange = (info: UploadChangeParam) => {
   const status = info.file.status
   if (status !== 'uploading') {
-    console.log(info.file, info.fileList)
+    // console.log(info.file, info.fileList)
+    // message.success(`${info.file.name} 文件上传中，请稍候.`)
   }
   if (status === 'done') {
-    message.success(`${info.file.name} 文件上传成功！.`)
     const fileurl = info.file.response.data
+    formState.dragger = fileurl
+    message.success(`${info.file.name} 文件上传成功.`)
   } else if (status === 'error') {
-    message.error(`${info.file.name} 文件上传失败！.`)
+    message.error(`${info.file.name} 文件上传失败.`)
   }
-}
-function handleDrop(e: DragEvent) {
-  console.log(e)
-}
-const resetForm = () => {
-  formRef.value.resetFields()
+  let resFileList = [...info.fileList]
+
+  resFileList = resFileList.slice(-1)
+
+  resFileList = resFileList.map((file) => {
+    if (file.response) {
+      file.url = file.response.url
+    }
+    return file
+  })
+
+  fileList.value = resFileList
 }
 </script>
 <style scoped>

@@ -35,12 +35,15 @@
         <a-input v-model:value="formState.ranking" placeholder="请输入内容" />
       </a-form-item>
       <a-form-item label="注册时间" name="date1">
-        <a-date-picker
-          v-model:value="formState.date1"
-          type="date"
-          placeholder="请选择日期"
-          style="width: 100%"
-        />
+        <a-config-provider :locale="locale">
+          <a-date-picker
+            v-model:value="formState.date1"
+            type="date"
+            placeholder="请选择日期"
+            style="width: 100%"
+            :locale="locale"
+          />
+        </a-config-provider>
       </a-form-item>
       <a-form-item ref="name" label="公司规模" class="custom-label" name="size">
         <a-input v-model:value="formState.size" placeholder="请输入内容" />
@@ -48,7 +51,7 @@
       <a-form-item label="佐证材料">
         <a-form-item name="dragger" no-style>
           <a-upload-dragger
-            v-model:file-list="formState.dragger"
+            v-model="formState.dragger"
             name="file"
             :max-count="1"
             :action="ossUploadUrl"
@@ -87,23 +90,13 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/zh-cn'
 import locale from 'ant-design-vue/es/date-picker/locale/zh_CN'
 dayjs.locale('zh-cn')
-interface FileItem {
-  response: {
-    data: string // 这里是 data 属性，应该是一个 URL 字符串
-  }
-}
 interface FormState {
   name: string
   date1: string
-
-interface FormState {
-  name: string
-  date1: Dayjs | undefined
-  dragger: any[]
+  dragger: string
   nature: string
   size: string
   ranking: string
-  dragger: FileItem[]
 }
 const formRef = ref()
 const labelCol = { span: 9 }
@@ -111,11 +104,10 @@ const wrapperCol = { span: 8 }
 const formState: UnwrapRef<FormState> = reactive({
   name: '',
   date1: '',
-  dragger: [],
+  dragger: '',
   nature: '',
   size: '',
-  ranking: '',
-  dragger: []
+  ranking: ''
 })
 const rules: Record<string, Rule[]> = {
   name: [{ required: true, message: '请填写注册公司名称', trigger: 'change' }],
@@ -153,49 +145,46 @@ async function onSubmit() {
     ranking: formState.ranking,
     signuptime: signuptime,
     scale: formState.size,
-    url: formState.dragger.map((item) => item.response.data).join(',')
+    url: formState.dragger
   }
   try {
     // 调用 ContestRequest 函数
     const response = await zhqdoubleRequest(requestData)
     // 在接口请求成功后进行提示
     message.success('提交成功')
-    ;(formState.name = ''),
-      (formState.nature = ''),
-      (formState.date1 = ''),
-      (formState.ranking = ''),
-      (formState.size = '')
-    formState.dragger = []
   } catch (error) {
     // 在接口请求失败时进行提示
     message.error('提交失败')
   }
-//上传pdf
+}
+// 判断只能上传PDF文件
 const beforeUpload = (file: any) => {
   const isPDF = file.type === 'application/pdf'
+  const maxFileSize = 10 * 1024 * 1024
+
   if (!isPDF) {
     message.error('只能上传 PDF 文件！')
+  } else if (file.size > maxFileSize) {
+    message.error('文件大小超过限制10MB！')
+  } else {
+    // message.success('PDF 文件上传成功！');
   }
-  return isPDF || Upload.LIST_IGNORE
+
+  return isPDF && file.size <= maxFileSize
 }
-const fileList = ref([])
 const handleChange = (info: UploadChangeParam) => {
   const status = info.file.status
   if (status !== 'uploading') {
-    console.log(info.file, info.fileList)
+    // console.log(info.file, info.fileList)
+    // message.success(`${info.file.name} 文件上传中，请稍候.`)
   }
   if (status === 'done') {
-    message.success(`${info.file.name} 文件上传成功！.`)
     const fileurl = info.file.response.data
+    formState.dragger = fileurl
+    message.success(`${info.file.name} 文件上传成功.`)
   } else if (status === 'error') {
-    message.error(`${info.file.name} 文件上传失败！.`)
+    message.error(`${info.file.name} 文件上传失败.`)
   }
-}
-function handleDrop(e: DragEvent) {
-  console.log(e)
-}
-const resetForm = () => {
-  formRef.value.resetFields()
 }
 </script>
 <style scoped>

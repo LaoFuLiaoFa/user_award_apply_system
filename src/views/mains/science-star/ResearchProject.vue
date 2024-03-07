@@ -8,6 +8,7 @@
 <template>
   <div class="contest_main">
     <div class="describe">
+      <h1 style="display: none">{{ title }}</h1>
       <span class="describe_content">评选说明:</span><br />
       <span class="describe_content"
         >1.作为项目主要成员(排名前八)获得院级及以上科研项目或教研课题立项(含教师科研项目)1项及以上;
@@ -27,26 +28,30 @@
       <a-form-item ref="name" label="项目名称" class="custom-label" name="name">
         <a-input v-model:value="formState.name" placeholder="请输入内容" />
       </a-form-item>
-      <a-form-item ref="name" label="项目级别" class="custom-label" name="level">
+      <a-form-item ref="name" label="项目级别" class="custom-label" name="content">
         <a-input v-model:value="formState.level" placeholder="请输入内容" />
       </a-form-item>
-      <a-form-item ref="name" label="项目内容" class="custom-label" name="content">
-        <a-input v-model:value="formState.content" placeholder="请输入内容" />
+      <a-form-item ref="name" label="排名/总人数" class="custom-label" name="level">
+        <a-input v-model:value="formState.ranking" placeholder="请输入内容" />
       </a-form-item>
       <a-form-item label="立项时间" name="date1">
-        <a-date-picker
-          v-model:value="formState.date1"
-          type="date"
-          placeholder="请选择日期"
-          style="width: 100%"
-        />
+        <a-config-provider :locale="locale">
+          <a-date-picker
+            v-model:value="formState.date1"
+            type="date"
+            placeholder="请选择日期"
+            style="width: 100%"
+            :locale="locale"
+          />
+        </a-config-provider>
       </a-form-item>
       <a-form-item label="佐证材料">
         <a-form-item name="dragger" no-style>
           <a-upload-dragger
-            v-model:file-list="formState.dragger"
+            v-model="formState.dragger"
             name="file"
             :max-count="1"
+            :file-list="fileList"
             :action="ossUploadUrl"
             :headers="headers"
             :beforeUpload="beforeUpload"
@@ -83,39 +88,35 @@ import { format } from 'date-fns'
 import dayjs from 'dayjs'
 import 'dayjs/locale/zh-cn'
 import locale from 'ant-design-vue/es/date-picker/locale/zh_CN'
+import type { UploadProps } from 'ant-design-vue'
+
 dayjs.locale('zh-cn')
-interface FileItem {
-  response: {
-    data: string // 这里是 data 属性，应该是一个 URL 字符串
-  }
-}
 interface FormState {
   name: string
   date1: string
-  dragger: FileItem[]
-
-interface FormState {
-  name: string
-  date1: Dayjs | undefined
-  dragger: any[]
->>>>>>> main
+  dragger: string
   level: string
-  content: string
+  ranking: string
 }
+// 传递导航标题
+const router = useRouter()
+const { title } = router.currentRoute.value.meta
 const formRef = ref()
 const labelCol = { span: 9 }
 const wrapperCol = { span: 8 }
+const fileList = ref<UploadProps['fileList']>([])
 const formState: UnwrapRef<FormState> = reactive({
   name: '',
   date1: '',
-  dragger: [],
+  dragger: '',
   level: '',
-  content: ''
+  ranking: ''
 })
+//表单验证
 const rules: Record<string, Rule[]> = {
   name: [{ required: true, message: '请填写竞赛名称', trigger: 'change' }],
   level: [{ required: true, message: '请填写项目级别', trigger: 'change' }],
-  content: [{ required: true, message: '请填写项目内容', trigger: 'change' }],
+  ranking: [{ required: true, message: '请填写项目内容', trigger: 'change' }],
   date1: [{ required: true, message: '请填写立项时间', trigger: 'change', type: 'object' }],
   dragger: [{ required: true, message: '请上传佐证材料', trigger: 'change' }]
 }
@@ -141,51 +142,71 @@ async function onSubmit() {
   const signuptime = formatDate(dateObject.getTime(), 'yyyy-MM-dd')
   // 创建符合期望类型的对象
   const requestData = {
-    scitype: title as string,
+    scitype: '科研项目',
     sciname: formState.name,
     scigrade: formState.level,
     ranking: formState.ranking,
     signuptime: signuptime,
-    url: formState.dragger.map((item) => item.response.data).join(',')
+    url: formState.dragger
   }
   try {
     // 调用 ContestRequest 函数
     const response = await zhqresearchRequest(requestData)
-    // 在接口请求成功后进行提示
-    message.success('提交成功')
-    ;(formState.name = ''), (formState.level = ''), (formState.ranking = ''), (formState.date1 = '')
-    formState.dragger = []
+    if (response.code === 200) {
+      // 在接口请求成功后进行提示
+      message.success('提交成功')
+      formState.name = ''
+      formState.level = ''
+      formState.ranking = ''
+      formState.date1 = ''
+      formState.dragger = ''
+      fileList.value = []
+    }
   } catch (error) {
     // 在接口请求失败时进行提示
     message.error('提交失败')
   }
-  }
-//上传pdf
+}
+// 上传PDF地址
+const ossUploadUrl = BASE_URL + 'api/stu/OssUpdate'
+// 判断只能上传PDF文件
 const beforeUpload = (file: any) => {
   const isPDF = file.type === 'application/pdf'
+
   if (!isPDF) {
     message.error('只能上传 PDF 文件！')
+    return false
   }
-  return isPDF || Upload.LIST_IGNORE
+
+  return false
 }
-const fileList = ref([])
+//pdf文件上传状态
 const handleChange = (info: UploadChangeParam) => {
   const status = info.file.status
   if (status !== 'uploading') {
-    console.log(info.file, info.fileList)
+    // message.success(`${info.file.name} 文件上传中，请稍候.`)
+    // console.log(info.file, info.fileList)
   }
   if (status === 'done') {
-    message.success(`${info.file.name} 文件上传成功！.`)
     const fileurl = info.file.response.data
+    formState.dragger = fileurl
+    message.success(`${info.file.name} 文件上传成功.`)
   } else if (status === 'error') {
-    message.error(`${info.file.name} 文件上传失败！.`)
+    message.error(`${info.file.name} 文件上传失败.`)
   }
-}
-function handleDrop(e: DragEvent) {
-  console.log(e)
-}
-const resetForm = () => {
-  formRef.value.resetFields()
+
+  let resFileList = [...info.fileList]
+
+  resFileList = resFileList.slice(-1)
+
+  resFileList = resFileList.map((file) => {
+    if (file.response) {
+      file.url = file.response.url
+    }
+    return file
+  })
+
+  fileList.value = resFileList
 }
 </script>
 <style scoped>
