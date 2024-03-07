@@ -37,7 +37,7 @@
       <a-form-item label="佐证材料">
         <a-form-item name="dragger" no-style>
           <a-upload-dragger
-            v-model="formState.dragger"
+            v-model:file-list="formState.dragger"
             name="file"
             :max-count="1"
             :action="ossUploadUrl"
@@ -75,10 +75,16 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/zh-cn'
 import locale from 'ant-design-vue/es/date-picker/locale/zh_CN'
 dayjs.locale('zh-cn')
+
+interface FileItem {
+  response: {
+    data: string // 这里是 data 属性，应该是一个 URL 字符串
+  }
+}
 interface FormState {
   name: string
   date1: string
-  dragger: string
+  dragger: FileItem[]
 }
 const formRef = ref()
 const labelCol = { span: 9 }
@@ -86,7 +92,7 @@ const wrapperCol = { span: 8 }
 const formState: UnwrapRef<FormState> = reactive({
   name: '',
   date1: '',
-  dragger: ''
+  dragger: []
 })
 const token = localStorage.getItem('access_Token')
 const headers = {
@@ -115,7 +121,7 @@ async function onSubmit() {
   // 创建符合期望类型的对象
   const requestData = {
     entryname: formState.name,
-    url: formState.dragger,
+    url: formState.dragger.map((item) => item.response.data).join(','),
     signuptime: signuptime
   }
   try {
@@ -125,7 +131,7 @@ async function onSubmit() {
     message.success('提交成功')
     formState.name = ''
     // 清空佐证材料
-    formState.dragger = '' // 清空文件路径
+    formState.dragger = [] // 清空文件路径
     formState.date1 = ''
   } catch (error) {
     // 在接口请求失败时进行提示
@@ -151,10 +157,10 @@ const beforeUpload = (file: any) => {
 }
 // 上传PDF状态
 const handleChange = (info: UploadChangeParam) => {
+  const status = info.file.status
   if (status === 'done') {
-    const fileurl = info.file.response.data
-    formState.dragger = fileurl
     message.success(`${info.file.name} 文件上传成功！.`)
+    const fileurl = info.file.response.data
   } else if (status === 'error') {
     message.error(`${info.file.name} 文件上传失败！.`)
   }

@@ -48,7 +48,7 @@
       <a-form-item label="佐证材料">
         <a-form-item name="dragger" no-style>
           <a-upload-dragger
-            v-model="formState.dragger"
+            v-model:file-list="formState.dragger"
             name="file"
             :max-count="1"
             :action="ossUploadUrl"
@@ -88,10 +88,15 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/zh-cn'
 import locale from 'ant-design-vue/es/date-picker/locale/zh_CN'
 dayjs.locale('zh-cn')
+interface FileItem {
+  response: {
+    data: string // 这里是 data 属性，应该是一个 URL 字符串
+  }
+}
 interface FormState {
   name: string
   date1: string
-  dragger: string
+  dragger: FileItem[]
   level: string
   ranking: string
 }
@@ -104,7 +109,7 @@ const wrapperCol = { span: 8 }
 const formState: UnwrapRef<FormState> = reactive({
   name: '',
   date1: '',
-  dragger: '',
+  dragger: [],
   level: '',
   ranking: ''
 })
@@ -143,13 +148,15 @@ async function onSubmit() {
     scigrade: formState.level,
     ranking: formState.ranking,
     signuptime: signuptime,
-    url: formState.dragger
+    url: formState.dragger.map((item) => item.response.data).join(',')
   }
   try {
     // 调用 ContestRequest 函数
     const response = await zhqresearchRequest(requestData)
     // 在接口请求成功后进行提示
     message.success('提交成功')
+    ;(formState.name = ''), (formState.level = ''), (formState.ranking = ''), (formState.date1 = '')
+    formState.dragger = []
   } catch (error) {
     // 在接口请求失败时进行提示
     message.error('提交失败')
@@ -176,11 +183,10 @@ const beforeUpload = (file: any) => {
 const handleChange = (info: UploadChangeParam) => {
   const status = info.file.status
   if (status === 'done') {
+    message.success(`${info.file.name} 文件上传成功！.`)
     const fileurl = info.file.response.data
-    formState.dragger = fileurl
-    message.success(`${info.file.name} file uploaded successfully.`)
   } else if (status === 'error') {
-    message.error(`${info.file.name} file upload failed.`)
+    message.error(`${info.file.name} 文件上传失败！.`)
   }
 }
 </script>
