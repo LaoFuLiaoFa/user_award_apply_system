@@ -34,9 +34,11 @@
       <a-form-item label="佐证材料">
         <a-form-item name="dragger" no-style>
           <a-upload-dragger
-            v-model:fileList="formState.dragger"
-            name="files"
-            action="/upload.do"
+            v-model:file-list="formState.dragger"
+            name="file"
+            :max-count="1"
+            :action="ossUploadUrl"
+            :headers="headers"
             :beforeUpload="beforeUpload"
             @change="handleChange"
           >
@@ -64,7 +66,23 @@ import { message, Upload } from 'ant-design-vue'
 import type { UploadChangeParam } from 'ant-design-vue'
 import cssAnimation from 'ant-design-vue/es/_util/css-animation'
 import style = cssAnimation.style
+import { ContestRequest } from '@/service/mains/contest-star/contest-star'
+import { BASE_URL } from '@/service/config'
+import { format } from 'date-fns'
+import dayjs from 'dayjs'
+import 'dayjs/locale/zh-cn'
+import locale from 'ant-design-vue/es/date-picker/locale/zh_CN'
+dayjs.locale('zh-cn')
 
+interface FileItem {
+  response: {
+    data: string // 这里是 data 属性，应该是一个 URL 字符串
+  }
+}
+interface FormState {
+  name: string
+  date1: string
+  dragger: FileItem[]
 interface FormState {
   name: string
   date1: Dayjs | undefined
@@ -83,15 +101,40 @@ const rules: Record<string, Rule[]> = {
   date1: [{ required: true, message: '请填写竞赛报名时间', trigger: 'change', type: 'object' }],
   dragger: [{ required: true, message: '请上传佐证材料', trigger: 'change' }]
 }
-const onSubmit = () => {
-  formRef.value
-    .validate()
-    .then(() => {
-      console.log('values', formState, toRaw(formState))
-    })
-    .catch((error) => {
-      console.log('error', error)
-    })
+// 时间戳转换
+const formatDate = (timestamp, formatStr = 'yyyy-MM-dd') => {
+  return format(new Date(timestamp), formatStr)
+}
+// 提交表单
+async function onSubmit() {
+  // 检查表单是否填写完整
+  if (!formState.name || !formState.date1 || formState.dragger.length === 0) {
+    message.error('请填写完整表单')
+    return
+  }
+  // 将字符串日期转换为日期对象
+  const dateObject = new Date(formState.date1)
+  // 将日期对象转换为格式化后的日期字符串
+  const signuptime = formatDate(dateObject.getTime(), 'yyyy-MM-dd')
+  // 创建符合期望类型的对象
+  const requestData = {
+    entryname: formState.name,
+    url: formState.dragger.map((item) => item.response.data).join(','),
+    signuptime: signuptime
+  }
+  try {
+    // 调用 ContestRequest 函数
+    const response = await ContestRequest(requestData)
+    // 在接口请求成功后进行提示
+    message.success('提交成功')
+    formState.name = ''
+    // 清空佐证材料
+    formState.dragger = [] // 清空文件路径
+    formState.date1 = ''
+  } catch (error) {
+    // 在接口请求失败时进行提示
+    message.error('提交失败')
+  }
 }
 //上传pdf
 const beforeUpload = (file: any) => {
@@ -104,11 +147,12 @@ const beforeUpload = (file: any) => {
 const fileList = ref([])
 const handleChange = (info: UploadChangeParam) => {
   const status = info.file.status
+  if (status === 'done') {
+    message.success(`${info.file.name} 文件上传成功！.`)
+    const fileurl = info.file.response.data
   if (status !== 'uploading') {
     console.log(info.file, info.fileList)
   }
-  if (status === 'done') {
-    message.success(`${info.file.name} file uploaded successfully.`)
   } else if (status === 'error') {
     message.error(`${info.file.name} file upload failed.`)
   }

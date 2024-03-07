@@ -31,12 +31,7 @@
             <template v-else-if="column.dataIndex == 'operate'">
               <!-- 操作 -->
               <template v-if="record.state == '1'">
-                <a-button type="text" style="color: green" @click="showCertificate"
-                  >查看证书</a-button
-                >
-                <a-modal v-model:open="openCertificate" title="查看详情" :footer="null" centered>
-                  <p>balabala</p>
-                </a-modal>
+                <CheckCircleTwoTone :style="{ fontSize: '25px' }" />
               </template>
               <template v-else-if="record.state == '0'">
                 <!-- 确定修改内容 -->
@@ -92,10 +87,9 @@
                 </a-popconfirm>
               </template>
               <template v-else-if="record.state == '2'">
-                <a-button type="text" danger @click="showModal2">查看驳回原因</a-button>
-                <a-modal v-model:open="open2" title="查看驳回原因" :footer="null" centered>
-                  <p>{{ record.name }}</p>
-                </a-modal>
+                <a-button type="text" danger @click="showModal2(record.key, record)"
+                  >查看驳回原因</a-button
+                >
                 <a-popconfirm
                   v-if="data.length"
                   title="您确定删除？"
@@ -110,6 +104,52 @@
           </template>
         </a-table>
       </a-spin>
+      <a-modal v-model:open="open" title="修改填写内容" @ok="handleOk" centered>
+        <!-- 表单验证 -->
+        <a-form ref="form" :model="formState" :layout="'vertical'" hideRequiredMark :rules="rules">
+          <a-form-item label="参赛名称:" name="entryname">
+            <a-input v-model:value="formState.entryname" @input="handleFormChange" />
+          </a-form-item>
+          <a-form-item label="竞赛报名时间" name="signuptime">
+            <a-config-provider :locale="locale">
+              <a-date-picker
+                v-model:value="formState.signuptime"
+                type="date"
+                format="YYYY-MM-DD"
+                placeholder="请选择日期"
+                style="width: 100%"
+                :locale="locale"
+              />
+            </a-config-provider>
+          </a-form-item>
+          <a-form-item label="佐证材料" name="url">
+            <a-form-item name="file" no-style>
+              <a-upload
+                :action="ossUploadUrl"
+                :multiple="true"
+                :headers="headers"
+                :file-list="fileList"
+                @change="handleChange"
+                @input="handleFormChange"
+                @remove="handleRemove"
+                :beforeUpload="beforeUpload"
+              >
+                <a-button>
+                  <upload-outlined></upload-outlined>
+                  点击上传
+                </a-button>
+              </a-upload>
+            </a-form-item>
+          </a-form-item>
+        </a-form>
+        <template #footer>
+          <a-button key="back" @click="handleCancel">取消</a-button>
+          <a-button key="submit" type="primary" @click="onSubmit">确定</a-button>
+        </template>
+      </a-modal>
+      <a-modal v-model:open="open2" title="查看驳回原因" :footer="null" centered>
+        {{ reason }}
+      </a-modal>
     </div>
   </div>
 </template>
@@ -120,6 +160,18 @@ import type { UnwrapRef } from 'vue'
 
 import { ZHQgetCompetition } from '@/service/mains/apply-manage/match-star'
 import { message } from 'ant-design-vue'
+import type { UploadChangeParam, UploadProps } from 'ant-design-vue/es/upload'
+import { BASE_URL } from '@/service/config'
+import { UploadOutlined } from '@ant-design/icons-vue'
+import { format } from 'date-fns'
+import { Dayjs } from 'dayjs'
+import type { Rule } from 'ant-design-vue/es/form'
+import dayjs from 'dayjs'
+import 'dayjs/locale/zh-cn'
+import locale from 'ant-design-vue/es/date-picker/locale/zh_CN'
+dayjs.locale('zh-cn')
+import { Form } from 'ant-design-vue'
+import { CheckCircleTwoTone, CloudDownloadOutlined } from '@ant-design/icons-vue'
 
 // 定义加载状态
 const spinning = ref<boolean>(true)
@@ -263,6 +315,15 @@ const handleCertificate = (e: MouseEvent) => {
   console.log(e)
   openUrl.value = false
 }
+/**
+ * @description 请求竞赛之星驳回原因。
+ */
+const open2 = ref<boolean>(false)
+const reason = ref('')
+const showModal2 = async (key: string, record) => {
+  const loginResult = await ZHQgetreasonJingsai(record.id)
+  reason.value = loginResult.data[0].reason
+  open2.value = true
 //表单
 interface FormState {
   name: string
