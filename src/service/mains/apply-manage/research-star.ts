@@ -31,7 +31,7 @@ export function JWHgetresearchRequest(Authorization:any) {
 export function JWHeditRequest(scitype:string,sciname:string,scigrade:string,ranking:string,signuptime:string,url:any,id:string) {
   return lsjRequest.post({
     url: '/api/stu/editsci',
-    data: { scitype,sciname,scigrade,ranking,signuptime,id }
+    data: { scitype,sciname,scigrade,ranking,signuptime,url, id }
   })
 }
 /**

@@ -10,7 +10,7 @@
     <a-table class="ant-table-striped" :dataSource="dataSource" :columns="columns" bordered>
       <template #bodyCell="{ column, record }">
         <template v-if="column.dataIndex == 'address'">
-          <a-button type="link" @click="material">点击查看</a-button>
+          <a-button type="link" @click="material(record)">佐证材料</a-button>
         </template>
         <template v-if="column.dataIndex == 'state' && record.state == 1">
           <a style="color: #81c26b" class="aaa">已通过</a>
@@ -29,7 +29,8 @@
             <a-button
               type="primary"
               style="background-color: rgb(241, 170, 78)"
-              @click="showModal1"
+              @click="showModal1(record)"
+
             >
               修改
             </a-button>
@@ -37,19 +38,19 @@
               <!-- 修改表单 -->
               <a-form :model="formState" style="max-width: 500px">
                 <a-form-item label="类别">
-                  <a-input v-model:value="formState.scitype" />
+                  <a-input v-model:value="formState.scitype" :placeholder="record.scitype"/>
                 </a-form-item>
                 <a-form-item label="项目名称/软著名称/期刊名称">
-                  <a-input v-model:value="formState.sciname" />
+                  <a-input v-model:value="formState.sciname" :placeholder="record.sciname"/>
                 </a-form-item>
                 <a-form-item label="项目级别/颁发单位/论文名称">
-                  <a-input v-model:value="formState.scigrade" />
+                  <a-input v-model:value="formState.scigrade" :placeholder="record.scigrade"/>
                 </a-form-item>
                 <a-form-item label="排名/总人数">
-                  <a-input v-model:value="formState.ranking" />
+                  <a-input v-model:value="formState.ranking" :placeholder="record.ranking"/>
                 </a-form-item>
                 <a-form-item label="立项时间/获批时间/发表时间">
-                  <a-input v-model:value="formState.signuptime" />
+                  <a-input v-model:value="formState.signuptime" :placeholder="record.signuptime"/>
                 </a-form-item>
                 <a-form-item label="佐证材料" name="dragger" >
                     <a-upload-dragger
@@ -57,7 +58,8 @@
                       name="files"
                       action="/upload.do"
                       :beforeUpload="beforeUpload"
-                      @change="handleChange"
+                      @change="() => handleChange(record)"
+                      v-model:uploadedFiles="fileList"
                     >
                     <p class="ant-upload-drag-icon">
                       <InboxOutlined />
@@ -66,7 +68,7 @@
                   </a-upload-dragger>
                 </a-form-item>
                 <a-form-item label="id">
-                  <a-input v-model:value="record.key"/>
+                  <a-input v-model:value="record.id" :placeholder="record.id"/>
                 </a-form-item>
               </a-form>
             </a-modal>
@@ -79,7 +81,7 @@
             </a-popconfirm>
           </template>
           <template v-else-if="record.state == 2">
-            <a-button type="link" danger @click="showModal2(record.key)">查看驳回原因</a-button>
+            <a-button type="link" danger @click="showModal2(record)">查看驳回原因</a-button>
             <a-modal
               v-model:open="open2"
               title="查看驳回原因"
@@ -106,8 +108,9 @@
 import { computed, ref, reactive, toRaw, type UnwrapRef } from 'vue'
 import { message, Upload } from 'ant-design-vue'
 import { InboxOutlined } from '@ant-design/icons-vue'
-import type { UploadChangeParam } from 'ant-design-vue'
+import type { UploadChangeParam,UploadProps } from 'ant-design-vue'
 import { JWHgetresearchRequest,JWHeditRequest,JWHdeleteRequest,JWHupfileRequest,JWHgetreasonRequest } from '../../../service/mains/apply-manage/research-star'
+const fileList = ref<UploadProps['fileList']>([ ])
 
 const reasondata = ref(''); // 使用 ref 定义 reasondata
 const url = ref('');
@@ -218,23 +221,8 @@ const researchtoken = "bearer"+' '+localStorage.getItem('LOGIN_TOKEN');
     },
   })
   if (researchResult.code == 200) {
-     console.log(researchResult.data)
-    for (let i = 0; i < researchResult.data.length; i++) {
-      const item = researchResult.data[i];
-
-      url.value = item.url;
-      awardurl.value = item.awardurl;
-      const dataItem = {
-        key: item.id,
-        scitype: item.scitype,
-        sciname: item.sciname,
-        scigrade: item.scigrade,
-        ranking: item.ranking,
-        signuptime: item.signuptime,
-        state: item.state,
-      };
-      dataSource.value.push(dataItem);
-    }
+     //console.log(researchResult.data)
+     dataSource.value = researchResult.data
   }
 }
 
@@ -267,18 +255,21 @@ const beforeUpload = (file: any) => {
   upfile(file); // 直接将 file 对象传递给 upfile 函数
   return false; // 返回 false 取消默认的上传行为
 }
-const handleChange = (info: UploadChangeParam) => {
-  const status = info.file.status
-  if (status !== 'uploading') {
-   // console.log(info.file, info.fileList)
-  }
-  if (status === 'done') {
-    message.success(`${info.file.name} file uploaded successfully.`)
+//展示上传列表
+const handleChange = (item: any) => (info: UploadChangeParam) => {
+  let resFileList = [...info.fileList];
+  resFileList = resFileList.slice(-2);
+  resFileList = resFileList.map(file => {
+    if (file.response) {
+     console.log(item.url)
 
-  } else if (status === 'error') {
-    message.error(`${info.file.name} file upload failed.`)
-  }
-}
+      file.url = item.url;
+    }
+    return file;
+  });
+
+  fileList.value = resFileList;
+};
 // 取出登录token
 const filetoken = "bearer"+' '+localStorage.getItem('LOGIN_TOKEN');
     // console.log(filetoken)
@@ -292,11 +283,11 @@ async function upfile(file: any) {
   }
 
 }
-const material = () => {
+const material = (item) => {
   open3.value = true
-  // console.log(url.value)
+  //console.log(item.url)
   window.open(
-      url.value,
+    item.url,
       '_blank'
     )
 }
@@ -306,11 +297,21 @@ const handleOk3 = (e: MouseEvent) => {
   // console.log(e)
   open3.value = false
 }
-//点击修改
+//点击修改item
 const open = ref<boolean>(false)
 
-const showModal1 = () => {
-  open.value = true
+const showModal1 = (item) => {
+  open.value = true;
+  console.log(item)
+  console.log(item)
+  fileList.value = [];
+  const newFile = {
+    uid: item.id,
+    name: item.url,
+    url: item.url
+  };
+
+  fileList.value.push(newFile);
 }
 
 const handleOk = (e: MouseEvent,key:string, record) => {
@@ -332,9 +333,10 @@ const handleOk = (e: MouseEvent,key:string, record) => {
 // 查看驳回原因
 const open2 = ref<boolean>(false)
 
-const showModal2 = (key:string) => {
+const showModal2 = (item) => {
   open2.value = true
-  reason(key)
+  //console.log(item)
+  reason(item.id)
 }
 
 const handleOk2 = (e: MouseEvent) => {
@@ -363,13 +365,13 @@ const handleOk4 = (e: MouseEvent) => {
 
 // 获取驳回原因
 const reasontoken = "bearer"+' '+localStorage.getItem('LOGIN_TOKEN');
-async function reason(key:string) {
-  const reasonResult = await JWHgetreasonRequest(key,reasontoken)
-     // console.log(key)
+async function reason(id) {
+  const reasonResult = await JWHgetreasonRequest(id,reasontoken)
+     // console.log(id)
    //console.log(reasonResult.data)
   if (reasonResult.code == 200) {
     reasondata.value = reasonResult.data[0].reason;
-    // console.log(reasondata)
+    //console.log(reasondata)
     message.success(`${reasonResult.msg}`)
   } else {
     message.warning(`${reasonResult.msg}`)

@@ -36,6 +36,7 @@ declare module 'vue' {
     ATable: typeof import('ant-design-vue/es')['Table']
     ATableColumn: typeof import('ant-design-vue/es')['TableColumn']
     ATooltip: typeof import('ant-design-vue/es')['Tooltip']
+    AUpload: typeof import('ant-design-vue/es')['Upload']
     AUploadDragger: typeof import('ant-design-vue/es')['UploadDragger']
     HeaderMenu: typeof import('./src/components/mains-components/mainpage/HeaderMenu.vue')['default']
     MainMenu: typeof import('./src/components/mains-components/mainpage/MainMenu.vue')['default']

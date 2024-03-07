@@ -1,4 +1,4 @@
-<!--
+<!--ile
     * @FileDescription: 报名表单管理 —— 双创之星报名管理。
     * @Author: 蒋雯绘
     * @Date: 2024年1月24日
@@ -10,7 +10,7 @@
     <a-table class="ant-table-striped" :dataSource="dataSource" :columns="columns" bordered>
       <template #bodyCell="{ column, record }">
         <template v-if="column.dataIndex == 'address'">
-          <a-button type="link" @click="material">佐证材料</a-button>
+          <a-button type="link" @click="material(record)">佐证材料</a-button>
         </template>
         <template v-if="column.dataIndex == 'state' && record.state == 1">
           <a style="color: #81c26b" class="aaa">已通过</a>
@@ -29,40 +29,48 @@
             <a-button
               type="primary"
               style="background-color: rgb(241, 170, 78)"
-              @click="showModal1"
+              @click="showModal1(record)"
             >
               修改
             </a-button>
-            <a-modal v-model:open="open" title="修改填写内容" @ok="handleOk" okText="确认" cancelText="取消">
+            <a-modal v-model:open="open" title="修改填写内容" @ok="handleMoodelChange(record)" okText="确认" cancelText="取消">
               <!-- 修改表单 -->
               <a-form :model="formState" style="max-width: 500px">
                 <a-form-item label="注册公司名称">
-                  <a-input v-model:value="formState.companyname" />
+                  <a-input v-model:value="formState.companyname" :placeholder="record.companyname" />
                 </a-form-item>
                 <a-form-item label="虚拟/实体">
-                  <a-input v-model:value="formState.vp" />
+                  <a-input v-model:value="formState.vp"  :placeholder="record.vp" />
                 </a-form-item>
                 <a-form-item label="申报人排名">
-                  <a-input v-model:value="formState.ranking" />
+                  <a-input v-model:value="formState.ranking" :placeholder="record.ranking"/>
                 </a-form-item>
                 <a-form-item label="注册时间">
-                  <a-input v-model:value="formState.signuptime" />
+                  <a-input v-model:value="formState.signuptime" :placeholder="record.signuptime"/>
                 </a-form-item>
                 <a-form-item label="公司规模">
-                  <a-input v-model:value="formState.scale" />
+                  <a-input v-model:value="formState.scale" :placeholder="record.scale"/>
                 </a-form-item>
                 <a-form-item label="佐证材料" name="dragger" >
-                    <a-upload-dragger
+                    <!-- <a-upload-dragger
                       v-model:fileList="formState.dragger"
                       name="files"
                       action="http://47.108.144.113:2000/api/stu/OssUpdate"
                       :beforeUpload="beforeUpload"
-                    >
+                      :change="customRequest"
+                      v-model:file-list="fileList"
+                    > -->
+                    <a-upload
+                    action="http://47.108.144.113:2000/api/stu/OssUpdate"
+                    :multiple="true"
+                    :file-list="fileList"
+                    @change="handleChange"
+                  >
                     <p class="ant-upload-drag-icon">
                       <InboxOutlined />
                     </p>
                     <p class="ant-upload-text">将文件拖到此处或点击上传</p>
-                  </a-upload-dragger>
+                  </a-upload>
                 </a-form-item>
               </a-form>
             </a-modal>
@@ -75,7 +83,7 @@
             </a-popconfirm>
           </template>
           <template v-else-if="record.state == 2">
-            <a-button type="link" danger @click="showModal2(record.key)">查看驳回原因</a-button>
+            <a-button type="link" danger @click="showModal2(record)">查看驳回原因</a-button>
             <a-modal
               v-model:open="open2"
               title="查看驳回原因"
@@ -101,14 +109,16 @@
 <script setup lang="ts">
 import { computed, ref, reactive, toRaw, type UnwrapRef } from 'vue'
 import { message, Upload } from 'ant-design-vue'
+import type { UploadProps } from 'ant-design-vue/es/upload';
 import { InboxOutlined } from '@ant-design/icons-vue'
 import type { UploadChangeParam } from 'ant-design-vue'
 import { JWHgetdoubleRequest,JWHeditRequest,JWHdeleteRequest,JWHupfileRequest,JWHgetreasonRequest } from '../../../service/mains/apply-manage/double-star'
 
 const reasondata = ref(''); // 使用 ref 定义 reasondata
 const url = ref('');
-const awardurl = ref<string[]>([]);
-
+const fileList = ref<UploadProps['fileList'] | null>(null)!
+// const awardurl = ref<string[]>([]);
+  const awardurl = ref('');
 //定义表单
 interface FormState {
   companyname: string
@@ -215,24 +225,8 @@ const doubletoken = "bearer"+' '+localStorage.getItem('LOGIN_TOKEN');
     },
   })
   if (doubleResult.code == 200) {
-    // console.log(doubleResult.data)
-    for (let i = 0; i < doubleResult.data.length; i++) {
-      const item = doubleResult.data[i];
-
-      url.value = item.url;
-      awardurl[i]=item.awardurl;
-      const dataItem = {
-        key: item.id,
-        companyname: item.companyname,
-        vp: item.vp,
-        ranking: item.ranking,
-        signuptime: item.signuptime,
-        scale: item.scale,
-        state: item.state,
-
-      };
-      dataSource.value.push(dataItem);
-    }
+    console.log(doubleResult.data)
+    dataSource.value = doubleResult.data
   }
 }
 
@@ -255,17 +249,18 @@ const onDelete = (key: string, record) => {
 }
 //佐证材料
 const open3 = ref<boolean>(false)
-//上传pdf
+/* //判断是否是pdf
 const beforeUpload = (file: any) => {
   const isPDF = file.type === 'application/pdf'
   if (!isPDF) {
     message.error('只能上传 PDF 文件！')
     return false;
   }
-  upfile(file); // 直接将 file 对象传递给 upfile 函数
-  return false; // 返回 false 取消默认的上传行为
-}
-async function upfile(file: any) {
+  upfile(file);
+  return false;
+} */
+//上传修改文件获得链接
+/* async function upfile(file: any) {
   // 取出登录token
 const filetoken = "bearer "+localStorage.getItem('LOGIN_TOKEN');
     // console.log(file)
@@ -274,59 +269,92 @@ const filetoken = "bearer "+localStorage.getItem('LOGIN_TOKEN');
   if (fileResult.code == 200) {
     message.success(`${fileResult.msg}`)
     localStorage.setItem('fileResult', fileResult.data)
+    console.log()
   } else {
     message.warning(`${fileResult.msg}`)
   }
 
-}
-const material = () => {
+} */
+//查看材料
+const material = (item) => {
   open3.value = true
+  //console.log(item);
+
   // console.log(url.value)
   window.open(
-      url.value,
+    item.url,
       '_blank'
     )
 }
 
 
 const handleOk3 = (e: MouseEvent) => {
-  console.log(e)
+  //console.log(e)
   open3.value = false
 }
-//点击修改
+
 const open = ref<boolean>(false)
-
-const showModal1 = () => {
+/* //点击修改
+const showModal1 = (item) => {
   open.value = true
+  console.log(item)
+  console.log(item.url )
+  fileList.value=item.url
+} */
 
-}
+/* const customRequest = async () => {
+  try {
+    const filetoken = "bearer " + localStorage.getItem('LOGIN_TOKEN');
+    const fileResult = await JWHupfileRequest(file, filetoken);
 
-const handleOk = (e: MouseEvent,key:string, record) => {
-  // console.log(e)
+    if (fileResult.code === 200) {
+      message.success(`${fileResult.msg}`);
+      localStorage.setItem('fileResult', fileResult.data)
+    } else {
+      message.warning(`${fileResult.msg}`);
+    }
+  } catch (error) {
+    console.error('上传文件出错：', error);
+    message.error('上传文件出错，请重试！');
+  }
+}; */
+
+//上传修改表单
+const handleMoodelChange = async (record) => {
+  console.log(record.url)
   open.value = false
   const upfile = localStorage.getItem('fileResult');
-  const edit = async () => {
-    const editResult = await JWHeditRequest(formState.companyname,formState.vp,formState.ranking,formState.signuptime,formState.scale,upfile,key)
-  // console.log(editResult)
+  const editResult = await JWHeditRequest(formState.companyname, formState.vp, formState.scale, formState.ranking, formState.signuptime, url, record.id)
+  //console.log(editResult)
   if (editResult.code == 200) {
     message.success(`${editResult.msg}`)
+    clear();
+    grade();
   } else {
     message.warning(`${editResult.msg}`)
   }
-  }
-  edit();
-  grade();
+  // edit();
+  // grade();
 }
+// 清空数据
+const clear= () => {
+  formState.companyname=''
+  formState.vp=''
+  formState.scale=''
+  formState.ranking=''
+  formState.signuptime=''
+}
+
 // 查看驳回原因
 const open2 = ref<boolean>(false)
 
-const showModal2 = (key:string) => {
+const showModal2 = (item) => {
   open2.value = true
-  reason(key)
+  reason(item.id)
 }
 
 const handleOk2 = (e: MouseEvent) => {
-  console.log(e)
+  //console.log(e)
   open2.value = false
 }
 // 查看证书
@@ -334,24 +362,24 @@ const open4 = ref<boolean>(false)
 
 const showModal4 = () => {
   open3.value = true
-  console.log(awardurl[1])
+  //console.log(awardurl.value)
   window.open(
-    awardurl[1],
+    awardurl.value,
       '_blank'
     )
 }
 
 const handleOk4 = (e: MouseEvent) => {
-  console.log(e)
+ // console.log(e)
   open3.value = false
 }
 
 
 // 获取驳回原因
 const reasontoken = "bearer"+' '+localStorage.getItem('LOGIN_TOKEN');
-async function reason(key:string) {
-  const reasonResult = await JWHgetreasonRequest(key,reasontoken)
-     // console.log(key)
+async function reason(id) {
+  const reasonResult = await JWHgetreasonRequest(id,reasontoken)
+     // console.log(id)
    //console.log(reasonResult.data)
   if (reasonResult.code == 200) {
     reasondata.value = reasonResult.data[0].reason;
