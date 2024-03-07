@@ -6,20 +6,8 @@ import lsjRequest from '../..'
 
 /**
  * @description 方法描述
+ * @param {参数类型} 参数名称
+ * @param {参数类型} 参数名称
  * @method post / get
  * @return 没有返回信息写 void / 有返回信息 {返回类型} 描述信息
- * @param formState
  */
-export function zhqdoubleRequest(formState: {
-  companyname: string
-  vp: string
-  ranking: string
-  signuptime: string
-  scale: string
-  url: string
-}) {
-  return lsjRequest.post({
-    url: '/api/stu/commitcompany',
-    data: formState
-  })
-}

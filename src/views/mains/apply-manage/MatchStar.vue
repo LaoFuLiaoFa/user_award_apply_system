@@ -1,6 +1,6 @@
 <!--
     * @FileDescription: 报名表单管理 —— 竞赛之星报名管理。
-    * @Author: 张亭婷and钟胡琴
+    * @Author: 张亭婷
     * @Date: 2024年1月22日
     * @LastEditors: 李思佳
     * @LastEditTime: 2024年1月30日
@@ -9,21 +9,14 @@
   <div class="contain">
     <div class="main">
       <a-spin tip="正在加载，请稍候..." :spinning="spinning">
-        <!--        列表-->
-        <a-table
-          :data-source="data"
-          :pagination="false"
-          :scroll="{ y: 350 }"
-          :columns="columns"
-          bordered
-        >
+        <a-table :data-source="data" :columns="columns" bordered>
           <template #bodyCell="{ column, record }">
-            <template v-if="column.dataIndex === 'signuptime'">
-              {{ record.signuptime }}
-            </template>
             <!-- 佐证材料 -->
             <template v-if="column.dataIndex == 'url'">
-              <a-button type="link" @click="() => showUrl(record)">点击查看</a-button>
+              <a-button type="link" @click="showUrl">点击查看</a-button>
+              <a-modal v-model:open="openUrl" title="佐证材料" :footer="null" centered>
+                <a>{{ record.url }}</a>
+              </a-modal>
             </template>
             <!-- 状态 -->
             <template v-else-if="column.dataIndex == 'state' && record.state == '0'">
@@ -45,10 +38,44 @@
                 <a-button
                   type="primary"
                   style="background-color: rgb(241, 170, 78)"
-                  @click="showModal1(record)"
+                  @click="showModal1"
                 >
                   修改
                 </a-button>
+                <a-modal
+                  v-model:open="open"
+                  title="修改填写内容"
+                  @ok="handleOk"
+                  style="
+                    text-align: center;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-direction: column;
+                  "
+                  :footer="null"
+                  centered
+                >
+                  <!-- 表单验证 -->
+                  <a-form :model="formState" :layout="'vertical'">
+                    <a-form-item label="参赛名称:">
+                      <a-input v-model:value="formState.name" />
+                    </a-form-item>
+                    <a-form-item label="报名时间:">
+                      <a-input v-model:value="formState.name" />
+                    </a-form-item>
+                    <a-form-item label="佐证材料:">
+                      <a-input v-model:value="formState.name" />
+                    </a-form-item>
+                    <a-form-item label="状态:">
+                      <a-input v-model:value="formState.name" />
+                    </a-form-item>
+                    <a-form-item label="操作:">
+                      <a-input v-model:value="formState.name" />
+                    </a-form-item>
+                  </a-form>
+                  <a-button type="primary" style="width: 30%"> 确 定 </a-button>
+                </a-modal>
                 <a-popconfirm
                   v-if="data.length"
                   title="您确定删除？"
@@ -131,12 +158,7 @@
 import { ref, reactive } from 'vue'
 import type { UnwrapRef } from 'vue'
 
-import {
-  ZHQdeleteJingsai,
-  ZHQeditcompetition,
-  ZHQgetCompetition,
-  ZHQgetreasonJingsai
-} from '@/service/mains/apply-manage/match-star'
+import { ZHQgetCompetition } from '@/service/mains/apply-manage/match-star'
 import { message } from 'ant-design-vue'
 import type { UploadChangeParam, UploadProps } from 'ant-design-vue/es/upload'
 import { BASE_URL } from '@/service/config'
@@ -153,16 +175,14 @@ import { CheckCircleTwoTone, CloudDownloadOutlined } from '@ant-design/icons-vue
 
 // 定义加载状态
 const spinning = ref<boolean>(true)
+
 let data = ref([])
-//时间戳转换
-// const formatDate = (timestamp, formatStr = 'yyyy-MM-dd') => {
-//   return format(new Date(timestamp), formatStr)
-// }
 /**
  * @description 请求竞赛之星数据。
  */
 const getData = async () => {
   const loginResult = await ZHQgetCompetition()
+  // console.log(loginResult)
   if (loginResult.code) {
     data.value = loginResult.data
     spinning.value = false
@@ -186,7 +206,7 @@ const columns = reactive([
         fontWeight: 'bold'
       }
     }),
-    width: 150,
+    width: 180,
     align: 'center'
   },
   {
@@ -199,7 +219,7 @@ const columns = reactive([
         fontWeight: 'bold'
       }
     }),
-    width: 150,
+    width: 180,
     align: 'center'
   },
   {
@@ -212,7 +232,7 @@ const columns = reactive([
         fontWeight: 'bold'
       }
     }),
-    width: 150,
+    width: 180,
     align: 'center'
   },
   {
@@ -225,7 +245,7 @@ const columns = reactive([
         fontWeight: 'bold'
       }
     }),
-    width: 150,
+    width: 180,
     align: 'center'
   },
   {
@@ -244,95 +264,11 @@ const columns = reactive([
 ])
 
 /**
- * @description 表单相关。
- */
-// 定义表单接口类型
-interface FormState {
-  entryname: string
-  signuptime: Dayjs | undefined
-  url: string
-  id: string
-}
-const formState: UnwrapRef<FormState> = reactive({
-  entryname: '',
-  signuptime: undefined,
-  url: '',
-  id: ''
-})
-const rules: Record<string, Rule[]> = {
-  entryname: [{ required: true, message: '请填写竞赛名称', trigger: 'change' }],
-  signuptime: [
-    { required: true, message: '请填写竞赛报名时间', trigger: 'change', type: 'object' }
-  ],
-  url: [{ required: true, message: '请上传佐证材料', trigger: 'change' }]
-}
-const fileList = ref<UploadProps['fileList'] | null>(null)!
-const beforeUpload = (file: any) => {
-  const isPDF = file.type === 'application/pdf'
-  const maxFileSize = 10 * 1024 * 1024
-
-  if (!isPDF) {
-    file.status = 'error'
-    message.error('只能上传 PDF 文件！')
-  } else if (file.size > maxFileSize) {
-    message.error('文件大小超过限制10MB！')
-  } else {
-    message.success('PDF 文件上传成功！')
-  }
-
-  return isPDF && file.size <= maxFileSize
-}
-const handleChange = (info: UploadChangeParam) => {
-  if (!fileList.value) {
-    fileList.value = []
-  }
-  let resFileList = [...info.fileList]
-  resFileList = resFileList.slice(-1)
-  resFileList = resFileList.map((file) => {
-    const newFile = {
-      uid: file.uid,
-      name: file.name || 'Untitled',
-      url: file.response ? file.response.data : file.url
-    }
-    return newFile
-  })
-  fileList.value = resFileList
-
-  // 打印上传文件的响应信息
-  if (info.file.status === 'done' && info.file.response) {
-    formState.url = info.file.response.data
-  }
-}
-
-// 设置请求头
-const token = localStorage.getItem('access_Token')
-const headers = {
-  Authorization: 'Bearer ' + token
-}
-//设置上传文件地址
-// 上传PDF地址
-const ossUploadUrl = BASE_URL + 'api/stu/OssUpdate'
-
-// 移除已上传的文件
-const handleRemove = (file: UploadChangeParam) => {
-  if (!fileList.value) {
-    fileList.value = []
-  }
-  const index = fileList.value.findIndex((item) => item.uid === file.uid)
-  if (index !== -1) {
-    fileList.value.splice(index, 1)
-    formState.url = ''
-    fileList.value = []
-  }
-}
-
-/**
  * @description 佐证材料相关。
  */
 const openUrl = ref<boolean>(false)
-// 在 showUrl 函数中获取 record.url 并打开链接
-const showUrl = (record: { url: string }) => {
-  window.open(record.url, '_blank')
+const showUrl = () => {
+  openUrl.value = true
 }
 
 /**
@@ -343,101 +279,41 @@ const showCertificate = () => {
   openUrl.value = true
 }
 
-/**
- * @description 删除竞赛之星数据。
- */
-const onDelete = async (key: string, record) => {
-  try {
-    // 调用 ContestRequest 函数
-    const res = await ZHQdeleteJingsai(record.id)
-    // 在接口请求成功后进行提示
-    message.success('删除成功')
-    getData()
-  } catch (error) {
-    // 在接口请求失败时进行提示
-    message.error('删除失败')
-  }
+//删除
+const onDelete = (key: string, record) => {
+  delete data[key]
 }
-/**
- * @description 修改竞赛之星数据。
- */
+//点击修改
 const open = ref<boolean>(false)
 
-const showModal1 = (record) => {
-  // 将表格中的数据赋值给表单
-  formState.entryname = record.entryname
-  formState.signuptime = dayjs(record.signuptime)
-  formState.url = record.url
-  formState.id = record.id
-  fileList.value = [
-    {
-      uid: '-1', // 为uid设置一个值，可以使用某个生成uid的方法
-      name: record.url, // 为name设置一个值，可以使用record.name或其他默认名称
-      url: record.url
-    }
-  ]
+const showModal1 = () => {
   open.value = true
 }
-//点击出现修改弹窗
+
 const handleOk = (e: MouseEvent) => {
+  console.log(e)
   open.value = false
 }
-/**
- * @description 提交竞赛之星表单数据。
- */
-const handleCancel = () => {
-  open.value = false
-  isFormModified = false // 将表单修改标志设置为 false
+// 查看驳回原因
+const open2 = ref<boolean>(false)
+
+const showModal2 = () => {
+  open2.value = true
 }
-// 定义一个变量来跟踪表单是否被修改过
-let isFormModified = false
 
-// 表单相关
-const formRef = ref(null)
-const { resetFields } = Form.useForm(formRef)
-// 表单修改事件处理函数
-function handleFormChange() {
-  isFormModified = true
+const handleOk2 = (e: MouseEvent) => {
+  console.log(e)
+  open2.value = false
 }
-//表单修改
-// 提交表单
-async function onSubmit() {
-  // 检查表单是否填写完整
-  if (!formState.entryname || !formState.signuptime || !formState.url) {
-    message.error('请填写完整表单')
-    return
-  }
-  // 检查表单是否有变化
-  // if (isFormModified) {
-  try {
-    const dateString = (formState.signuptime as dayjs.Dayjs).format('YYYY-MM-DD')
-    // const dateString = dayjs(formState.signuptime)
-    // 调用 ContestRequest 函数
-    const response = await ZHQeditcompetition(
-      formState.entryname,
-      dateString,
-      formState.url,
-      formState.id
-    )
-    // 在接口请求成功后进行提示
-    message.success('提交成功')
-    getData()
-    fileList.value = []
-    // formState.signuptime = {}
-    // formState.entryname = ''
-    // formState.url = ''
-    open.value = false
-  } catch (error) {
-    // 在接口请求失败时进行提示
-    message.error('提交失败')
-  }
-  // }
 
-  // 重置表单修改标志
-  isFormModified = false
+const handleOk3 = (e: MouseEvent) => {
+  console.log(e)
+  openUrl.value = false
+}
 
-  // 关闭表单提交对话框
-  open.value = false
+const handleCertificate = (e: MouseEvent) => {
+  console.log(e)
+  openUrl.value = false
 }
 /**
  * @description 请求竞赛之星驳回原因。
@@ -448,7 +324,15 @@ const showModal2 = async (key: string, record) => {
   const loginResult = await ZHQgetreasonJingsai(record.id)
   reason.value = loginResult.data[0].reason
   open2.value = true
+//表单
+interface FormState {
+  name: string
+  time: number
 }
+const formState: UnwrapRef<FormState> = reactive({
+  name: '',
+  time: 0
+})
 </script>
 
 <style scoped>
@@ -463,14 +347,14 @@ const showModal2 = async (key: string, record) => {
   text-align: center;
 }
 .main {
-  width: 98%;
+  width: 95%;
   height: 90%;
   background-color: white;
   border-radius: 10px;
 }
 
 .ant-modal-content .ant-modal-footer {
-  text-align: center;
+  text-align: cente;
   background-color: red;
 }
 :deep(:where(.css-dev-only-do-not-override-19yxfbp).ant-table-wrapper .ant-table-pagination-right) {
@@ -481,5 +365,20 @@ const showModal2 = async (key: string, record) => {
 }
 [data-doc-theme='dark'] .ant-table-striped :deep(.table-striped) td {
   background-color: rgb(29, 29, 29);
+}
+:deep(
+    :where(.css-dev-only-do-not-override-19yxfbp).ant-table-wrapper
+      .ant-table-container
+      table
+      > thead
+      > tr
+      :first-child
+      > *
+      :first-child
+  ) {
+  font-weight: normal;
+}
+:deep(:where(.css-dev-only-do-not-override-19yxfbp).ant-table-wrapper .ant-table-thead > tr > th) {
+  font-weight: normal;
 }
 </style>

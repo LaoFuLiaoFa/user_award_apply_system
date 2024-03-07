@@ -23,19 +23,13 @@
       <a-sub-menu>
         <template #title> <FormOutlined /><span>科研之星报名</span> </template>
         <a-menu-item :key="'/ResearchProject'">
-          <router-link :to="{ name: 'ResearchProject', meta: { title: '科研项目' } }">
-            科研项目</router-link
-          >
+          <router-link to="ResearchProject"> 科研项目</router-link>
         </a-menu-item>
         <a-menu-item :key="'/SoftwareCopyright'">
-          <router-link :to="{ name: 'SoftwareCopyright', meta: { title: '软件著作权' } }">
-            软件著作权</router-link
-          >
+          <router-link to="SoftwareCopyright"> 软件著作权</router-link>
         </a-menu-item>
         <a-menu-item :key="'/PublishPaper'">
-          <router-link :to="{ name: 'PublishPaper', meta: { title: '发表论文' } }">
-            发表论文</router-link
-          >
+          <router-link to="PublishPaper"> 发表论文</router-link>
         </a-menu-item>
       </a-sub-menu>
       <a-menu-item :key="'/DoubleStar'">

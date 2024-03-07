@@ -81,7 +81,7 @@
                           >
                             <template #addonAfter>
                               <a-radio-button style="background-color: white"
-                                >发送验证码</a-radio-button
+                              :disabled="buttonDisabled" @click="sendcode">{{ buttonDisabled ? `${countdown} 秒后可用` : '发送验证码' }}</a-radio-button
                               >
                             </template>
                           </a-input>
@@ -98,7 +98,8 @@
                       </a-form-item>
                     </a-form>
                   </div>
-                  <a-button type="primary" class="submit" @click="LogIn">确认</a-button>
+                  <a-button type="primary" class="submit" @click="regest">确认</a-button>
+                  <a-button type="primary" class="submit" @click="reback">返回登录</a-button>
                 </div>
               </div>
             </a-col>
@@ -110,10 +111,16 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive,ref } from 'vue'
 import SelectMenu from '@/components/mains-components/mainpage/SelectMenu.vue'
 import { UserOutlined, LockOutlined } from '@ant-design/icons-vue'
+import { message } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
+import { JWHemailRequest,JWHforgetRequest } from '@/service/begin/forgot-password/forgot-password'
+
+//按钮失效和倒计时
+const buttonDisabled = ref(false);
+const countdown = ref(60);
 
 const router = useRouter()
 const state = reactive({
@@ -184,10 +191,6 @@ const getCodeValidationRules = (fieldName: string) => [
   {
     required: true,
     message: `${fieldName}不能为空!`
-  },
-  {
-    pattern: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/,
-    message: '请输入正确的验证码'
   }
 ]
 const onFinish = (values: any) => {
@@ -196,8 +199,49 @@ const onFinish = (values: any) => {
 const onFinishFailed = (errorInfo: any) => {
   console.log('Failed:', errorInfo)
 }
-function LogIn() {
-  router.push('/LogIn')
+//发送邮箱验证码接口
+async function sendcode() {
+    // console.log(formState.email)
+  const emailResult = await JWHemailRequest(formState.email)
+    // console.log(emailResult)
+  if (emailResult.code == 200) {
+    // console.log(emailResult.data)
+    localStorage.setItem('EMAIL_TOKEN', emailResult.data.code)
+    //console.log(emailResult.data.code)
+    message.success(`${emailResult.msg}`)
+    buttonDisabled.value = true;
+    let timer = setInterval(() => {
+                countdown.value--;
+                if (countdown.value === 0) {
+                    clearInterval(timer);
+                    buttonDisabled.value = false; // 解锁按钮
+                    countdown.value = 60; // 重置倒计时
+                }
+            }, 1000); // 每秒更新倒计时
+  } else {
+    message.warning(`${emailResult.msg}`)
+  }
+}
+//修改密码接口
+async function regest() {
+  // 取出验证码token
+  const emailToken = localStorage.getItem('EMAIL_TOKEN');
+  // console.log(emailToken)
+  const forgetResult = await JWHforgetRequest( formState.useraccount,formState.email,formState.code,emailToken,formState.password)
+  // console.log(emailToken)
+  if (forgetResult.code == 200) {
+    login()
+    message.success(`${forgetResult .msg}`)
+  } else {
+    message.warning(`${forgetResult .msg}`)
+  }
+}
+const login = () => {
+  router.push('/Login')
+}
+//返回登录
+async function reback() {
+    router.push('/Login')
 }
 </script>
 

@@ -8,7 +8,6 @@
 <template>
   <div class="contest_main">
     <div class="describe">
-      <h1 style="display: none">{{ title }}</h1>
       <span class="describe_content">评选说明:</span><br />
       <span class="describe_content"
         >1.作为项目主要成员(排名前八)获得院级及以上科研项目或教研课题立项(含教师科研项目)1项及以上;
@@ -35,15 +34,12 @@
         <a-input v-model:value="formState.ranking" placeholder="请输入内容" />
       </a-form-item>
       <a-form-item label="获批时间" name="date1">
-        <a-config-provider :locale="locale">
-          <a-date-picker
-            v-model:value="formState.date1"
-            type="date"
-            placeholder="请选择日期"
-            style="width: 100%"
-            :locale="locale"
-          />
-        </a-config-provider>
+        <a-date-picker
+          v-model:value="formState.date1"
+          type="date"
+          placeholder="请选择日期"
+          style="width: 100%"
+        />
       </a-form-item>
       <a-form-item label="佐证材料">
         <a-form-item name="dragger" no-style>
@@ -71,11 +67,12 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { Dayjs } from 'dayjs'
+import { reactive, ref, toRaw } from 'vue'
 import type { UnwrapRef } from 'vue'
 import type { Rule } from 'ant-design-vue/es/form'
 import { InboxOutlined } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
+import { message, Upload } from 'ant-design-vue'
 import type { UploadChangeParam } from 'ant-design-vue'
 import cssAnimation from 'ant-design-vue/es/_util/css-animation'
 import style = cssAnimation.style
@@ -92,15 +89,14 @@ interface FileItem {
     data: string // 这里是 data 属性，应该是一个 URL 字符串
   }
 }
+
 interface FormState {
   name: string
-  date1: string
-  dragger: FileItem[]
+  date1: Dayjs | undefined
+  dragger: any[]
   unit: string
   ranking: string
 }
-const router = useRouter()
-const { title } = router.currentRoute.value.meta
 const formRef = ref()
 const labelCol = { span: 9 }
 const wrapperCol = { span: 8 }
@@ -111,7 +107,6 @@ const formState: UnwrapRef<FormState> = reactive({
   unit: '',
   ranking: ''
 })
-//表单验证
 const rules: Record<string, Rule[]> = {
   name: [{ required: true, message: '请填写软著名称', trigger: 'change' }],
   unit: [{ required: true, message: '请填写颁发单位', trigger: 'change' }],
@@ -159,32 +154,32 @@ async function onSubmit() {
     message.error('提交失败')
   }
 }
-// 上传PDF地址
-const ossUploadUrl = BASE_URL + 'api/stu/OssUpdate'
-// 判断只能上传PDF文件
+//上传pdf
 const beforeUpload = (file: any) => {
   const isPDF = file.type === 'application/pdf'
-  const maxFileSize = 10 * 1024 * 1024
-
   if (!isPDF) {
     message.error('只能上传 PDF 文件！')
-  } else if (file.size > maxFileSize) {
-    message.error('文件大小超过限制！')
-  } else {
-    // message.success('PDF 文件上传成功！');
   }
-
-  return isPDF && file.size <= maxFileSize
+  return isPDF || Upload.LIST_IGNORE
 }
-//pdf文件上传状态
+const fileList = ref([])
 const handleChange = (info: UploadChangeParam) => {
   const status = info.file.status
+  if (status !== 'uploading') {
+    console.log(info.file, info.fileList)
+  }
   if (status === 'done') {
     message.success(`${info.file.name} 文件上传成功！.`)
     const fileurl = info.file.response.data
   } else if (status === 'error') {
     message.error(`${info.file.name} 文件上传失败！.`)
   }
+}
+function handleDrop(e: DragEvent) {
+  console.log(e)
+}
+const resetForm = () => {
+  formRef.value.resetFields()
 }
 </script>
 <style scoped>

@@ -8,7 +8,6 @@
 <template>
   <div class="contest_main">
     <div class="describe">
-      <h1 style="display: none">{{ title }}</h1>
       <span class="describe_content">评选说明:</span><br />
       <span class="describe_content"
         >1.作为项目主要成员(排名前八)获得院级及以上科研项目或教研课题立项(含教师科研项目)1项及以上;
@@ -28,22 +27,19 @@
       <a-form-item ref="name" label="项目名称" class="custom-label" name="name">
         <a-input v-model:value="formState.name" placeholder="请输入内容" />
       </a-form-item>
-      <a-form-item ref="name" label="项目级别" class="custom-label" name="content">
+      <a-form-item ref="name" label="项目级别" class="custom-label" name="level">
         <a-input v-model:value="formState.level" placeholder="请输入内容" />
       </a-form-item>
-      <a-form-item ref="name" label="排名/总人数" class="custom-label" name="level">
-        <a-input v-model:value="formState.ranking" placeholder="请输入内容" />
+      <a-form-item ref="name" label="项目内容" class="custom-label" name="content">
+        <a-input v-model:value="formState.content" placeholder="请输入内容" />
       </a-form-item>
       <a-form-item label="立项时间" name="date1">
-        <a-config-provider :locale="locale">
-          <a-date-picker
-            v-model:value="formState.date1"
-            type="date"
-            placeholder="请选择日期"
-            style="width: 100%"
-            :locale="locale"
-          />
-        </a-config-provider>
+        <a-date-picker
+          v-model:value="formState.date1"
+          type="date"
+          placeholder="请选择日期"
+          style="width: 100%"
+        />
       </a-form-item>
       <a-form-item label="佐证材料">
         <a-form-item name="dragger" no-style>
@@ -97,12 +93,15 @@ interface FormState {
   name: string
   date1: string
   dragger: FileItem[]
+
+interface FormState {
+  name: string
+  date1: Dayjs | undefined
+  dragger: any[]
+>>>>>>> main
   level: string
-  ranking: string
+  content: string
 }
-// 传递导航标题
-const router = useRouter()
-const { title } = router.currentRoute.value.meta
 const formRef = ref()
 const labelCol = { span: 9 }
 const wrapperCol = { span: 8 }
@@ -111,13 +110,12 @@ const formState: UnwrapRef<FormState> = reactive({
   date1: '',
   dragger: [],
   level: '',
-  ranking: ''
+  content: ''
 })
-//表单验证
 const rules: Record<string, Rule[]> = {
   name: [{ required: true, message: '请填写竞赛名称', trigger: 'change' }],
   level: [{ required: true, message: '请填写项目级别', trigger: 'change' }],
-  ranking: [{ required: true, message: '请填写项目内容', trigger: 'change' }],
+  content: [{ required: true, message: '请填写项目内容', trigger: 'change' }],
   date1: [{ required: true, message: '请填写立项时间', trigger: 'change', type: 'object' }],
   dragger: [{ required: true, message: '请上传佐证材料', trigger: 'change' }]
 }
@@ -161,33 +159,33 @@ async function onSubmit() {
     // 在接口请求失败时进行提示
     message.error('提交失败')
   }
-}
-// 上传PDF地址
-const ossUploadUrl = BASE_URL + 'api/stu/OssUpdate'
-// 判断只能上传PDF文件
+  }
+//上传pdf
 const beforeUpload = (file: any) => {
   const isPDF = file.type === 'application/pdf'
-  const maxFileSize = 10 * 1024 * 1024
-
   if (!isPDF) {
     message.error('只能上传 PDF 文件！')
-  } else if (file.size > maxFileSize) {
-    message.error('文件大小超过限制10MB！')
-  } else {
-    // message.success('PDF 文件上传成功！');
   }
-
-  return isPDF && file.size <= maxFileSize
+  return isPDF || Upload.LIST_IGNORE
 }
-//pdf文件上传状态
+const fileList = ref([])
 const handleChange = (info: UploadChangeParam) => {
   const status = info.file.status
+  if (status !== 'uploading') {
+    console.log(info.file, info.fileList)
+  }
   if (status === 'done') {
     message.success(`${info.file.name} 文件上传成功！.`)
     const fileurl = info.file.response.data
   } else if (status === 'error') {
     message.error(`${info.file.name} 文件上传失败！.`)
   }
+}
+function handleDrop(e: DragEvent) {
+  console.log(e)
+}
+const resetForm = () => {
+  formRef.value.resetFields()
 }
 </script>
 <style scoped>

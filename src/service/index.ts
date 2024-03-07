@@ -20,7 +20,7 @@ const lsjRequest = new LSJRequest({
   interceptors: {
     requestSuccessFn: (config) => {
       // 每一个请求都自动携带token
-      const token = localStorage.getItem('access_Token')
+      const token = localStorage.getItem('LOGIN_TOKEN')
       if (config.headers && token) {
         // 类型缩小
         config.headers.Authorization = 'Bearer ' + token

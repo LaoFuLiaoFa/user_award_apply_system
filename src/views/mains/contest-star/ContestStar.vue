@@ -24,15 +24,12 @@
         <a-input v-model:value="formState.name" placeholder="请输入内容" />
       </a-form-item>
       <a-form-item label="竞赛报名时间" name="date1">
-        <a-config-provider :locale="locale">
-          <a-date-picker
-            v-model:value="formState.date1"
-            type="date"
-            placeholder="请选择日期"
-            style="width: 100%"
-            :locale="locale"
-          />
-        </a-config-provider>
+        <a-date-picker
+          v-model:value="formState.date1"
+          type="date"
+          placeholder="请选择日期"
+          style="width: 100%"
+        />
       </a-form-item>
       <a-form-item label="佐证材料">
         <a-form-item name="dragger" no-style>
@@ -60,11 +57,12 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { Dayjs } from 'dayjs'
+import { reactive, ref, toRaw } from 'vue'
 import type { UnwrapRef } from 'vue'
 import type { Rule } from 'ant-design-vue/es/form'
 import { InboxOutlined } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
+import { message, Upload } from 'ant-design-vue'
 import type { UploadChangeParam } from 'ant-design-vue'
 import cssAnimation from 'ant-design-vue/es/_util/css-animation'
 import style = cssAnimation.style
@@ -85,19 +83,19 @@ interface FormState {
   name: string
   date1: string
   dragger: FileItem[]
+interface FormState {
+  name: string
+  date1: Dayjs | undefined
+  dragger: any[]
 }
 const formRef = ref()
 const labelCol = { span: 9 }
 const wrapperCol = { span: 8 }
 const formState: UnwrapRef<FormState> = reactive({
   name: '',
-  date1: '',
+  date1: undefined,
   dragger: []
 })
-const token = localStorage.getItem('access_Token')
-const headers = {
-  Authorization: 'Bearer ' + token
-}
 const rules: Record<string, Rule[]> = {
   name: [{ required: true, message: '请填写竞赛名称', trigger: 'change' }],
   date1: [{ required: true, message: '请填写竞赛报名时间', trigger: 'change', type: 'object' }],
@@ -138,32 +136,32 @@ async function onSubmit() {
     message.error('提交失败')
   }
 }
-// 上传PDF地址
-const ossUploadUrl = BASE_URL + 'api/stu/OssUpdate'
-// 判断只能上传PDF文件
+//上传pdf
 const beforeUpload = (file: any) => {
   const isPDF = file.type === 'application/pdf'
-  const maxFileSize = 10 * 1024 * 1024
-
   if (!isPDF) {
     message.error('只能上传 PDF 文件！')
-  } else if (file.size > maxFileSize) {
-    message.error('文件大小超过限制10MB！')
-  } else {
-    // message.success('PDF 文件上传成功！');
   }
-
-  return isPDF && file.size <= maxFileSize
+  return isPDF || Upload.LIST_IGNORE
 }
-// 上传PDF状态
+const fileList = ref([])
 const handleChange = (info: UploadChangeParam) => {
   const status = info.file.status
   if (status === 'done') {
     message.success(`${info.file.name} 文件上传成功！.`)
     const fileurl = info.file.response.data
-  } else if (status === 'error') {
-    message.error(`${info.file.name} 文件上传失败！.`)
+  if (status !== 'uploading') {
+    console.log(info.file, info.fileList)
   }
+  } else if (status === 'error') {
+    message.error(`${info.file.name} file upload failed.`)
+  }
+}
+function handleDrop(e: DragEvent) {
+  console.log(e)
+}
+const resetForm = () => {
+  formRef.value.resetFields()
 }
 </script>
 <style scoped>
