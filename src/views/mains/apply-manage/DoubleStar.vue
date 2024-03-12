@@ -7,7 +7,13 @@
 -->
 <template>
   <div class="contain">
-    <a-table class="ant-table-striped" :dataSource="dataSource" :columns="columns" bordered>
+    <a-table
+      class="ant-table-striped"
+      :dataSource="dataSource"
+      :columns="columns"
+      bordered
+      :scroll="{ x: 1200 }"
+    >
       <template #bodyCell="{ column, record }">
         <template v-if="column.dataIndex == 'address'">
           <a-button type="link" @click="material(record)">佐证材料</a-button>
@@ -111,9 +117,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, reactive, toRaw, type UnwrapRef } from 'vue'
-import { message, Upload } from 'ant-design-vue'
-import { InboxOutlined, CheckCircleTwoTone, CloudDownloadOutlined } from '@ant-design/icons-vue'
+import { computed, ref, reactive, type UnwrapRef } from 'vue'
+import { message } from 'ant-design-vue'
+import { InboxOutlined, CheckCircleTwoTone } from '@ant-design/icons-vue'
 import type { UploadChangeParam, UploadProps } from 'ant-design-vue'
 import { BASE_URL } from '@/service/config'
 import {
@@ -125,7 +131,6 @@ import {
 } from '../../../service/mains/apply-manage/double-star'
 
 const reasondata = ref('') // 使用 ref 定义 reasondata
-const url = ref('')
 const awardurl = ref('')
 //定义表单
 interface FormState {
@@ -207,7 +212,8 @@ const columns = [
     title: '操作',
     dataIndex: 'operate',
     key: 'operate',
-    width: 300,
+    width: 250,
+    fixed: 'right',
     align: 'center'
   }
 ]
@@ -258,7 +264,7 @@ async function liedelete(key: string) {
     message.warning(`${deleteResult.msg}`)
   }
 }
-const count = computed(() => dataSource.value.length + 1)
+
 //删除前端数据
 const onDelete = (key: string) => {
   delete dataSource[key]
@@ -300,11 +306,6 @@ const material = (item) => {
   window.open(item.url, '_blank')
 }
 
-const handleOk3 = (e: MouseEvent) => {
-  //console.log(e)
-  open3.value = false
-}
-let currenturl = null
 const open = ref<boolean>(false)
 const fileList = ref<UploadProps['fileList']>([])
 const itemCloum = ref()
@@ -370,19 +371,6 @@ const showModal2 = (item) => {
 const handleOk2 = (e: MouseEvent) => {
   //console.log(e)
   open2.value = false
-}
-// 查看证书
-const open4 = ref<boolean>(false)
-
-const showModal4 = () => {
-  open3.value = true
-  //console.log(awardurl.value)
-  window.open(awardurl.value, '_blank')
-}
-
-const handleOk4 = (e: MouseEvent) => {
-  // console.log(e)
-  open3.value = false
 }
 
 // 获取驳回原因

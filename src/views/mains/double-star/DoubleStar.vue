@@ -74,15 +74,12 @@
 </template>
 
 <script setup lang="ts">
-import { Dayjs } from 'dayjs'
-import { reactive, ref, toRaw } from 'vue'
+import { reactive, ref } from 'vue'
 import type { UnwrapRef } from 'vue'
 import type { Rule } from 'ant-design-vue/es/form'
 import { InboxOutlined } from '@ant-design/icons-vue'
-import { message, Upload } from 'ant-design-vue'
+import { message } from 'ant-design-vue'
 import type { UploadChangeParam } from 'ant-design-vue'
-import cssAnimation from 'ant-design-vue/es/_util/css-animation'
-import style = cssAnimation.style
 import { BASE_URL } from '@/service/config'
 import { zhqdoubleRequest } from '@/service/mains/double-star/double-star'
 import { format } from 'date-fns'

@@ -40,6 +40,5 @@ declare module 'vue' {
     MainMenu: typeof import('./src/components/mains-components/mainpage/MainMenu.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
-    SelectMenu: typeof import('./src/components/mains-components/mainpage/SelectMenu.vue')['default']
   }
 }

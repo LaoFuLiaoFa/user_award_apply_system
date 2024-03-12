@@ -7,7 +7,13 @@
 -->
 <template>
   <div class="contain">
-    <a-table class="ant-table-striped" :dataSource="dataSource" :columns="columns" bordered>
+    <a-table
+      class="ant-table-striped"
+      :dataSource="dataSource"
+      :columns="columns"
+      bordered
+      :scroll="{ x: 1300 }"
+    >
       <template #bodyCell="{ column, record }">
         <template v-if="column.dataIndex == 'address'">
           <a-button type="link" @click="material(record)">佐证材料</a-button>
@@ -207,7 +213,8 @@ const columns = [
     title: '操作',
     dataIndex: 'operate',
     key: 'operate',
-    width: 300,
+    width: 250,
+    fixed: 'right',
     align: 'center'
   }
 ]
@@ -234,7 +241,7 @@ const fileList = ref<UploadProps['fileList']>([])
 //将新文件更新在列表中
 const handleChange = (info: UploadChangeParam) => {
   const status = info.file.status
-  console.log(info)
+  // console.log(info)
 
   if (status !== 'uploading') {
     // console.log(info.file, info.fileList)

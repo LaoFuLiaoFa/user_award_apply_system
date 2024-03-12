@@ -94,7 +94,7 @@ async function logIn() {
   const loginResult = await JWHLoginRequest(formState.useraccount, formState.password)
   // console.log(loginResult)
   if (loginResult.code == 200) {
-    console.log(loginResult.data.access_Token)
+    // console.log(loginResult.data.access_Token)
     localStorage.setItem('access_Token', loginResult.data.access_Token)
     router.push('/HomePage')
     spinning.value = false
@@ -182,7 +182,7 @@ function signIn() {
 }
 
 .logo {
-  height: 64px;
+  height: 50px;
   display: flex;
   justify-content: center;
   align-items: center;

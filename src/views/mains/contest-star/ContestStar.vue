@@ -67,8 +67,6 @@ import type { UnwrapRef } from 'vue'
 import type { Rule } from 'ant-design-vue/es/form'
 import { InboxOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
-import cssAnimation from 'ant-design-vue/es/_util/css-animation'
-import style = cssAnimation.style
 import { ContestRequest } from '@/service/mains/contest-star/contest-star'
 import { BASE_URL } from '@/service/config'
 import { format } from 'date-fns'
@@ -143,7 +141,7 @@ async function onSubmit() {
   try {
     // 调用 ContestRequest 函数
     const response = await ContestRequest(requestData)
-    console.log(response)
+    // console.log(response)
 
     // 在接口请求成功后进行提示
     message.success('提交成功')

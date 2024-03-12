@@ -13,7 +13,7 @@
         <a-table
           :data-source="data"
           :pagination="false"
-          :scroll="{ y: 350 }"
+          :scroll="{ x: 1300 }"
           :columns="columns"
           bordered
         >
@@ -255,6 +255,7 @@ const columns = reactive([
       }
     }),
     width: 250,
+    fixed: 'right',
     align: 'center'
   }
 ])
@@ -442,7 +443,6 @@ async function onSubmit() {
     // const dateString = dayjs(formState.signuptime)
     // 调用 ContestRequest 函数
     // spinning.value = true
-    console.log('111')
 
     const response = await ZHQeditcompetition(
       formState.entryname,
@@ -450,7 +450,7 @@ async function onSubmit() {
       formState.url,
       formState.id
     )
-    console.log(response)
+    // console.log(response)
 
     // 在接口请求成功后进行提示
     message.success('提交成功')

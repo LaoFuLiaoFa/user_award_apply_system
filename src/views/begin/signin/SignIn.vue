@@ -125,8 +125,6 @@
           </div>
         </a-layout>
       </a-spin>
-      <!-- <a-layout class="main"> -->
-      <!-- </a-layout> -->
     </div>
   </a-config-provider>
 </template>

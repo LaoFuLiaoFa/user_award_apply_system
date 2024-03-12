@@ -78,7 +78,6 @@ import type { Rule } from 'ant-design-vue/es/form'
 import { InboxOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import type { UploadChangeParam } from 'ant-design-vue'
-import cssAnimation from 'ant-design-vue/es/_util/css-animation'
 import { BASE_URL } from '@/service/config'
 import { useRouter } from 'vue-router'
 import { zhqsoftwareRequest } from '@/service/mains/science-star/software-copyright'
@@ -168,23 +167,18 @@ const ossUploadUrl = BASE_URL + 'api/stu/OssUpdate'
 // 判断只能上传PDF文件
 const beforeUpload = (file: any) => {
   const isPDF = file.type === 'application/pdf'
-  const maxFileSize = 10 * 1024 * 1024
 
   if (!isPDF) {
     message.error('只能上传 PDF 文件！')
-  } else if (file.size > maxFileSize) {
-    message.error('文件大小超过限制！')
-  } else {
-    // message.success('PDF 文件上传成功！');
+    return false
   }
 
-  return isPDF && file.size <= maxFileSize
+  return true
 }
 //pdf文件上传状态
 const handleChange = (info: UploadChangeParam) => {
   const status = info.file.status
   if (status !== 'uploading') {
-    // console.log(info.file, info.fileList)
     // message.success(`${info.file.name} 文件上传中，请稍候.`)
   }
   if (status === 'done') {
@@ -208,6 +202,7 @@ const handleChange = (info: UploadChangeParam) => {
   fileList.value = resFileList
 }
 </script>
+
 <style scoped>
 .describe {
   width: 100%;

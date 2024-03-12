@@ -13,14 +13,11 @@
       </div>
     </a-col>
     <a-col :span="10">
-      <a-menu
-        mode="horizontal"
-        :style="{ lineHeight: '64px', backgroundColor: '#02509b', color: '#fff' }"
-        v-model:selectedKeys="current"
-        :items="items"
-        @click="examine"
-      >
-      </a-menu>
+      <a-tooltip title="查看奖项通知说明">
+        <a-button type="dashed" ghost :icon="h(BellOutlined)" @click="examine" size="large"
+          >查看奖项通知说明</a-button
+        >
+      </a-tooltip>
     </a-col>
     <a-col :span="8" style="text-align: right">
       <a-tooltip title="退出登录">
@@ -37,28 +34,18 @@
 </template>
 
 <script setup lang="ts">
-import { h, ref } from 'vue'
+import { h } from 'vue'
 import { PoweroffOutlined, BellOutlined } from '@ant-design/icons-vue'
-import { message, type MenuProps } from 'ant-design-vue'
+import { message } from 'ant-design-vue'
 import router from '@/routers'
 
-const current = ref<string[]>([''])
-const items = ref<MenuProps['items']>([
-  {
-    key: '1',
-    icon: () => h(BellOutlined),
-    label: '奖项通知说明',
-    title: '查看奖项通知说明'
-  }
-])
-const examine = (info: { key: string }) => {
-  if (info.key === '1') {
-    window.open(
-      '../../../../public/院发〔2023〕013号 关于设立信息与商务管理学院学生学院奖项的通知.pdf',
-      '_blank'
-    )
-  }
+const examine = () => {
+  window.open(
+    'http://wenzhuhaonew.oss-cn-beijing.aliyuncs.com/files/65eaafd0d3e9f/院通知〔2024〕12号 信息与商务管理学院关于2023年秋季学期学生学院奖表彰的通知.pdf',
+    '_blank'
+  )
 }
+
 function handleExitClick() {
   message.success('退出系统成功,欢迎您下次登录!')
   router.push('/LogIn')

@@ -72,15 +72,12 @@
 </template>
 
 <script setup lang="ts">
-import { Dayjs } from 'dayjs'
-import { reactive, ref, toRaw } from 'vue'
+import { reactive, ref } from 'vue'
 import type { UnwrapRef } from 'vue'
 import type { Rule } from 'ant-design-vue/es/form'
 import { InboxOutlined } from '@ant-design/icons-vue'
-import { message, Upload } from 'ant-design-vue'
+import { message } from 'ant-design-vue'
 import type { UploadChangeParam } from 'ant-design-vue'
-import cssAnimation from 'ant-design-vue/es/_util/css-animation'
-import style = cssAnimation.style
 import { BASE_URL } from '@/service/config'
 import { useRouter } from 'vue-router'
 import { zhqresearchRequest } from '@/service/mains/science-star/research-project'
@@ -178,14 +175,13 @@ const beforeUpload = (file: any) => {
     return false
   }
 
-  return false
+  return true
 }
 //pdf文件上传状态
 const handleChange = (info: UploadChangeParam) => {
   const status = info.file.status
   if (status !== 'uploading') {
     // message.success(`${info.file.name} 文件上传中，请稍候.`)
-    // console.log(info.file, info.fileList)
   }
   if (status === 'done') {
     const fileurl = info.file.response.data

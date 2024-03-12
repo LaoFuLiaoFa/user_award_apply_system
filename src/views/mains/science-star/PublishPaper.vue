@@ -78,8 +78,6 @@ import type { Rule } from 'ant-design-vue/es/form'
 import { InboxOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import type { UploadChangeParam } from 'ant-design-vue'
-import cssAnimation from 'ant-design-vue/es/_util/css-animation'
-import style = cssAnimation.style
 import { BASE_URL } from '@/service/config'
 import { useRouter } from 'vue-router'
 import { zhqparperRequest } from '@/service/mains/science-star/publish-paper'
@@ -176,13 +174,12 @@ const beforeUpload = (file: any) => {
     return false
   }
 
-  return false
+  return true
 }
 //pdf文件上传状态
 const handleChange = (info: UploadChangeParam) => {
   const status = info.file.status
   if (status !== 'uploading') {
-    // console.log(info.file, info.fileList)
     // message.success(`${info.file.name} 文件上传中，请稍候.`)
   }
   if (status === 'done') {
@@ -206,6 +203,7 @@ const handleChange = (info: UploadChangeParam) => {
   fileList.value = resFileList
 }
 </script>
+
 <style scoped>
 .describe {
   width: 100%;

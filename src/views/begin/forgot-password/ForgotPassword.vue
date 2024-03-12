@@ -141,12 +141,7 @@ const getAccountValidationRules = (fieldName: string) => [
     message: '请输入有效学号'
   }
 ]
-const getUserValidationRules = (fieldName: string) => [
-  {
-    required: true,
-    message: `${fieldName}不能为空!`
-  }
-]
+
 const getPasswordValidationRules = (fieldName: string) => [
   {
     required: true,
@@ -157,6 +152,7 @@ const getPasswordValidationRules = (fieldName: string) => [
     message: '必须是8位以上包含字母和数字的密码'
   }
 ]
+
 const getEmeilValidationRules = (fieldName: string) => [
   {
     required: true,
@@ -167,6 +163,7 @@ const getEmeilValidationRules = (fieldName: string) => [
     message: '请输入正确的邮箱地址'
   }
 ]
+
 const getCodeValidationRules = (fieldName: string) => [
   {
     required: true,
